@@ -1,0 +1,284 @@
+# AI News Monitor - Source Registry
+# This file is the canonical source of truth for all monitored sources.
+# Validation performed 2026-04-12. See docs/source_access.md for details.
+#
+# Fields:
+#   id                    - unique machine identifier
+#   name                  - human-readable display name
+#   enabled               - whether to include in runs
+#   trust_weight          - float 0.0-1.0, used in scoring
+#   source_type           - "official" (lab/company) or "reported" (journalism)
+#   homepage_url          - main website
+#   section_url           - monitored section URL
+#   feed_url              - RSS/Atom feed URL (null if none)
+#   access_method         - "rss" | "html" | "rss_with_ua" | "html_nextjs"
+#   requires_user_agent   - true if a browser UA is needed
+#   article_url_patterns  - regex or glob patterns for valid article URLs
+#   listing_strategy      - "rss" | "html_nextjs" | "html_listing"
+#   parser_type           - selects which parser class to use
+#   notes                 - important caveats or observations
+#   curl_examples         - documented shell commands for manual inspection
+
+sources:
+
+  # ─── PRIMARY / OFFICIAL ─────────────────────────────────────────────────────
+
+  - id: openai_news
+    name: "OpenAI News"
+    enabled: true
+    trust_weight: 1.0
+    source_type: official
+    homepage_url: "https://openai.com/"
+    section_url: "https://openai.com/news/"
+    feed_url: "https://openai.com/news/rss.xml"
+    access_method: rss
+    requires_user_agent: false
+    article_url_patterns:
+      - "https://openai.com/index/*"
+      - "https://openai.com/news/*"
+      - "https://openai.com/academy/*"
+      - "https://openai.com/research/*"
+    listing_strategy: rss
+    parser_type: rss_standard
+    notes: >
+      HTML pages return 403. RSS feed at /news/rss.xml is validated and working.
+      Feed mixes news, research, and academy (tutorial) posts; classifier will
+      handle topic relevance filtering. Article links use /index/, /news/, and
+      occasionally /academy/ paths.
+    curl_examples:
+      - 'curl -L "https://openai.com/news/rss.xml"'
+      - 'curl -L "https://openai.com/news/"'
+
+  - id: openai_research
+    name: "OpenAI Research"
+    enabled: true
+    trust_weight: 1.0
+    source_type: official
+    homepage_url: "https://openai.com/"
+    section_url: "https://openai.com/research/"
+    feed_url: "https://openai.com/news/rss.xml"
+    access_method: rss
+    requires_user_agent: false
+    article_url_patterns:
+      - "https://openai.com/research/*"
+      - "https://openai.com/index/*"
+    listing_strategy: rss
+    parser_type: rss_standard
+    notes: >
+      OpenAI does not publish a separate research RSS. Shares the same feed as
+      openai_news. The pipeline will deduplicate across these two source IDs.
+      Research posts typically appear at /research/ or /index/ paths.
+    curl_examples:
+      - 'curl -L "https://openai.com/news/rss.xml"'
+
+  - id: anthropic_news
+    name: "Anthropic News"
+    enabled: true
+    trust_weight: 1.0
+    source_type: official
+    homepage_url: "https://www.anthropic.com/"
+    section_url: "https://www.anthropic.com/news"
+    feed_url: null
+    access_method: html_nextjs
+    requires_user_agent: false
+    article_url_patterns:
+      - "https://www.anthropic.com/news/*"
+      - "https://www.anthropic.com/*"
+    listing_strategy: html_nextjs
+    parser_type: anthropic
+    notes: >
+      No official RSS feed. Site is Next.js SSR; article metadata is embedded in
+      __NEXT_DATA__ script tag as inline JSON. Parser extracts article list from
+      serialized page props. Articles may appear at /news/[slug] or top-level
+      /[slug] paths. Validated 2026-04-12; no anti-bot blocking detected.
+    curl_examples:
+      - 'curl -L "https://www.anthropic.com/news"'
+      - 'curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" "https://www.anthropic.com/news"'
+
+  - id: anthropic_research
+    name: "Anthropic Research"
+    enabled: true
+    trust_weight: 1.0
+    source_type: official
+    homepage_url: "https://www.anthropic.com/"
+    section_url: "https://www.anthropic.com/research"
+    feed_url: null
+    access_method: html_nextjs
+    requires_user_agent: false
+    article_url_patterns:
+      - "https://www.anthropic.com/research/*"
+    listing_strategy: html_nextjs
+    parser_type: anthropic
+    notes: >
+      No official RSS feed. Same Next.js structure as anthropic_news. Page lists
+      60+ publications with dates and category tags. Uses same parser_type.
+    curl_examples:
+      - 'curl -L "https://www.anthropic.com/research"'
+
+  - id: deepmind_blog
+    name: "Google DeepMind Blog"
+    enabled: true
+    trust_weight: 1.0
+    source_type: official
+    homepage_url: "https://deepmind.google/"
+    section_url: "https://deepmind.google/discover/blog/"
+    feed_url: "https://deepmind.google/blog/rss.xml"
+    access_method: rss
+    requires_user_agent: false
+    article_url_patterns:
+      - "https://deepmind.google/blog/*"
+      - "https://blog.google/innovation-and-ai/*"
+    listing_strategy: rss
+    parser_type: rss_standard
+    notes: >
+      RSS feed validated and working. Includes both deepmind.google/blog/* and
+      cross-posted blog.google/innovation-and-ai/* articles. Feed publishes dates,
+      titles, and descriptions. Some posts link to Google Blog cross-posts.
+    curl_examples:
+      - 'curl -L "https://deepmind.google/blog/rss.xml"'
+      - 'curl -L "https://deepmind.google/discover/blog/"'
+
+  - id: huggingface_blog
+    name: "Hugging Face Blog"
+    enabled: true
+    trust_weight: 0.9
+    source_type: official
+    homepage_url: "https://huggingface.co/"
+    section_url: "https://huggingface.co/blog"
+    feed_url: "https://huggingface.co/blog/feed.xml"
+    access_method: rss
+    requires_user_agent: false
+    article_url_patterns:
+      - "https://huggingface.co/blog/*"
+    listing_strategy: rss
+    parser_type: rss_standard
+    notes: >
+      RSS 2.0 feed validated and working. Blog content is high-volume and includes
+      community posts from external authors (pattern: /blog/{author}/{slug}).
+      First-party HF posts use /blog/{slug} directly. Ranker will handle relevance
+      filtering; not every post is about frontier AI.
+    curl_examples:
+      - 'curl -L "https://huggingface.co/blog/feed.xml"'
+      - 'curl -L "https://huggingface.co/blog"'
+
+  # ─── REPORTED NEWS ──────────────────────────────────────────────────────────
+
+  - id: arstechnica_ai
+    name: "Ars Technica AI"
+    enabled: true
+    trust_weight: 0.85
+    source_type: reported
+    homepage_url: "https://arstechnica.com/"
+    section_url: "https://arstechnica.com/ai/"
+    feed_url: "https://arstechnica.com/ai/feed/"
+    access_method: rss_with_ua
+    requires_user_agent: true
+    article_url_patterns:
+      - "https://arstechnica.com/ai/*"
+      - "https://arstechnica.com/information-technology/*"
+    listing_strategy: rss
+    parser_type: rss_standard
+    notes: >
+      HTML and feed blocked from headless fetch without UA. RSS feed at
+      /ai/feed/ is well-documented and reliable with a standard browser User-Agent.
+      feedparser handles this well. Feed may also appear at
+      feeds.arstechnica.com/arstechnica/index for full-site feed.
+      Degrade gracefully on 403/timeout.
+    curl_examples:
+      - 'curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://arstechnica.com/ai/feed/"'
+      - 'curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://arstechnica.com/ai/"'
+
+  - id: techcrunch_ai
+    name: "TechCrunch Artificial Intelligence"
+    enabled: true
+    trust_weight: 0.85
+    source_type: reported
+    homepage_url: "https://techcrunch.com/"
+    section_url: "https://techcrunch.com/category/artificial-intelligence/"
+    feed_url: "https://techcrunch.com/category/artificial-intelligence/feed/"
+    access_method: rss
+    requires_user_agent: false
+    article_url_patterns:
+      - "https://techcrunch.com/*/artificial-intelligence*"
+      - "https://techcrunch.com/[0-9][0-9][0-9][0-9]/*"
+    listing_strategy: rss
+    parser_type: rss_standard
+    notes: >
+      RSS feed validated and working. Article URLs follow pattern
+      /YYYY/MM/DD/article-slug/. Site uses Turnstile bot protection on HTML pages
+      but the RSS feed is accessible without UA tricks. High volume feed.
+    curl_examples:
+      - 'curl -L "https://techcrunch.com/category/artificial-intelligence/feed/"'
+      - 'curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://techcrunch.com/category/artificial-intelligence/"'
+
+  - id: semafor
+    name: "Semafor"
+    enabled: true
+    trust_weight: 0.80
+    source_type: reported
+    homepage_url: "https://www.semafor.com/"
+    section_url: "https://www.semafor.com/vertical/tech"
+    feed_url: "https://www.semafor.com/rss.xml"
+    access_method: rss
+    requires_user_agent: false
+    article_url_patterns:
+      - "https://www.semafor.com/article/*"
+    listing_strategy: rss
+    parser_type: rss_standard
+    notes: >
+      RSS feed at /rss.xml validated and working; this is a general site feed
+      covering all topics. Classifier will filter for AI/tech relevant items.
+      Semafor uses /article/MM/DD/YYYY/article-slug URL pattern. Coverage is
+      broad but includes quality AI reporting.
+    curl_examples:
+      - 'curl -L "https://www.semafor.com/rss.xml"'
+      - 'curl -L "https://www.semafor.com/vertical/tech"'
+
+  - id: wired_ai
+    name: "WIRED Artificial Intelligence"
+    enabled: true
+    trust_weight: 0.80
+    source_type: reported
+    homepage_url: "https://www.wired.com/"
+    section_url: "https://www.wired.com/tag/artificial-intelligence/"
+    feed_url: "https://www.wired.com/feed/tag/ai/latest/rss"
+    access_method: rss_with_ua
+    requires_user_agent: true
+    article_url_patterns:
+      - "https://www.wired.com/story/*"
+      - "https://www.wired.com/*"
+    listing_strategy: rss
+    parser_type: rss_standard
+    notes: >
+      WIRED blocks headless fetches. RSS feed at /feed/tag/ai/latest/rss is
+      documented in community sources and the Feeder RSS reader. Requires a
+      browser-like User-Agent. Alternative: /feed/category/artificial-intelligence/rss.
+      Degrade gracefully if blocked (HTTP 403 or 429). Mark source as failed
+      in source_health if consecutive failures exceed threshold.
+    curl_examples:
+      - 'curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://www.wired.com/feed/tag/ai/latest/rss"'
+      - 'curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://www.wired.com/tag/artificial-intelligence/"'
+
+  - id: the_information
+    name: "The Information"
+    enabled: false
+    trust_weight: 0.90
+    source_type: reported
+    homepage_url: "https://www.theinformation.com/"
+    section_url: "https://www.theinformation.com/"
+    feed_url: "https://www.theinformation.com/feed"
+    access_method: html
+    requires_user_agent: true
+    article_url_patterns:
+      - "https://www.theinformation.com/articles/*"
+    listing_strategy: html_listing
+    parser_type: theinformation
+    notes: >
+      DISABLED. Hard paywall requiring login + subscription. Bot detection via
+      Cloudflare and reCAPTCHA. Content is not accessible without authentication.
+      RSS feed exists at /feed but article body content is paywalled. Only titles
+      and summaries may be available without a subscription. Enable only if you
+      have valid session credentials and a plan to handle authentication.
+    curl_examples:
+      - 'curl -L "https://www.theinformation.com/"'
+      - '# Full content requires authentication; not suitable for automated access'

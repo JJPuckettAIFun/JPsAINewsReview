@@ -1,0 +1,300 @@
+# AI News Monitor - Topic Registry
+# Defines the topics to monitor and their keyword signals for classification and scoring.
+# Each topic has a set of keywords used for:
+#   1. relevance scoring (ranker.py)
+#   2. category classification (classifier.py)
+#   3. filtering Semafor's general RSS feed
+
+topics:
+
+  - id: model_releases
+    name: "Model Releases"
+    category: model_releases
+    weight: 1.5
+    keywords:
+      - model
+      - release
+      - launch
+      - released
+      - launches
+      - GPT
+      - Claude
+      - Gemini
+      - Llama
+      - Grok
+      - Mistral
+      - Falcon
+      - weights
+      - checkpoint
+      - open source model
+      - open-source model
+      - new model
+      - model update
+      - fine-tuned
+      - fine-tune
+      - multimodal
+      - vision model
+      - language model
+      - LLM
+
+  - id: product_launches
+    name: "Product Launches"
+    category: product_launches
+    weight: 1.3
+    keywords:
+      - product
+      - feature
+      - launch
+      - announced
+      - announcement
+      - available now
+      - general availability
+      - GA
+      - preview
+      - beta
+      - API
+      - platform
+      - ChatGPT
+      - Claude.ai
+      - Gemini app
+      - Copilot
+      - Perplexity
+      - integration
+      - plugin
+      - update
+      - version
+
+  - id: agents_tooling
+    name: "Agents and Tooling"
+    category: agents_tooling
+    weight: 1.4
+    keywords:
+      - agent
+      - agentic
+      - autonomous
+      - multi-agent
+      - coding agent
+      - software agent
+      - AI developer
+      - MCP
+      - Model Context Protocol
+      - tool use
+      - function calling
+      - computer use
+      - browser use
+      - workflow
+      - orchestration
+      - automation
+      - Devin
+      - SWE-bench
+      - coding assistant
+      - IDE
+
+  - id: research
+    name: "Research"
+    category: research
+    weight: 1.2
+    keywords:
+      - research
+      - paper
+      - arxiv
+      - study
+      - published
+      - findings
+      - experiment
+      - results
+      - technique
+      - method
+      - approach
+      - preprint
+      - NeurIPS
+      - ICML
+      - ICLR
+      - scaling
+      - emergent
+      - capabilities
+      - reasoning
+      - chain of thought
+      - RLHF
+      - alignment technique
+
+  - id: infrastructure
+    name: "Infrastructure"
+    category: infrastructure
+    weight: 1.2
+    keywords:
+      - chip
+      - chips
+      - GPU
+      - TPU
+      - NPU
+      - inference
+      - training
+      - data center
+      - compute
+      - cluster
+      - Nvidia
+      - AMD
+      - Intel
+      - AWS
+      - Azure
+      - GCP
+      - cloud
+      - H100
+      - H200
+      - Blackwell
+      - hardware
+      - accelerator
+      - CUDA
+      - quantization
+      - deployment
+      - serving
+      - throughput
+      - latency
+      - efficiency
+
+  - id: policy_regulation
+    name: "Policy and Regulation"
+    category: policy_regulation
+    weight: 1.3
+    keywords:
+      - regulation
+      - policy
+      - legislation
+      - law
+      - bill
+      - Senate
+      - Congress
+      - EU
+      - European Union
+      - AI Act
+      - executive order
+      - government
+      - federal
+      - White House
+      - NIST
+      - copyright
+      - lawsuit
+      - legal
+      - compliance
+      - ban
+      - restriction
+      - export control
+      - antitrust
+      - FTC
+      - DOJ
+
+  - id: safety_evals
+    name: "Safety and Evaluations"
+    category: safety_evals
+    weight: 1.4
+    keywords:
+      - safety
+      - alignment
+      - evaluation
+      - benchmark
+      - eval
+      - red team
+      - red-teaming
+      - jailbreak
+      - misuse
+      - risk
+      - harm
+      - bias
+      - fairness
+      - interpretability
+      - mechanistic
+      - constitutional AI
+      - RLHF
+      - RLAIF
+      - hallucination
+      - hallucinations
+      - reliability
+      - robustness
+      - adversarial
+      - dangerous capabilities
+      - frontier safety
+      - AGI safety
+      - superintelligence
+      - ASL
+
+  - id: funding_ma
+    name: "Funding and M&A"
+    category: funding_ma
+    weight: 1.2
+    keywords:
+      - funding
+      - raises
+      - raised
+      - investment
+      - valuation
+      - Series A
+      - Series B
+      - Series C
+      - IPO
+      - acquisition
+      - acquires
+      - merger
+      - acqui-hire
+      - billion
+      - million
+      - venture
+      - VC
+      - investors
+      - round
+      - deal
+      - partnership deal
+      - strategic investment
+
+  - id: enterprise_adoption
+    name: "Enterprise Adoption"
+    category: enterprise_adoption
+    weight: 1.1
+    keywords:
+      - enterprise
+      - deployment
+      - adopted
+      - customer
+      - contract
+      - deal
+      - ROI
+      - workforce
+      - productivity
+      - business
+      - commercial
+      - revenue
+      - subscription
+      - B2B
+      - Fortune 500
+      - organization
+      - team
+
+  - id: frontier_models
+    name: "Frontier Models"
+    category: model_releases
+    weight: 1.5
+    keywords:
+      - frontier
+      - state of the art
+      - SOTA
+      - state-of-the-art
+      - o1
+      - o3
+      - o4
+      - GPT-5
+      - GPT-4
+      - Claude 3
+      - Claude 4
+      - Gemini Ultra
+      - Gemini Pro
+      - AGI
+      - superintelligence
+      - reasoning model
+      - thinking model
+
+# Minimum score thresholds for relevance filtering
+# Items scoring below topic_min_keyword_matches are filtered from general feeds
+# like Semafor that cover many topics
+relevance:
+  topic_min_keyword_matches: 1
+  general_feed_min_matches: 2

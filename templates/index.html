@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI News Monitor</title>
+  <style>
+    /* ── Reset & base ───────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 272px;
+      --sidebar-bg: #0f172a;
+      --sidebar-border: #1e293b;
+      --sidebar-text: #cbd5e1;
+      --sidebar-muted: #64748b;
+      --sidebar-hover: #1e293b;
+      --sidebar-active-bg: #1e3a5f;
+      --sidebar-active-border: #3b82f6;
+      --header-bg: #0f172a;
+
+      --content-bg: #f8fafc;
+      --content-text: #0f172a;
+      --content-muted: #64748b;
+      --border: #e2e8f0;
+
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --green: #22c55e;
+      --green-hover: #16a34a;
+
+      --badge-critical-bg: #fef2f2; --badge-critical-text: #dc2626; --badge-critical-border: #fca5a5;
+      --badge-high-bg: #fff7ed;    --badge-high-text: #ea580c;    --badge-high-border: #fdba74;
+      --badge-medium-bg: #eff6ff;  --badge-medium-text: #2563eb;  --badge-medium-border: #93c5fd;
+      --badge-low-bg: #f8fafc;     --badge-low-text: #64748b;     --badge-low-border: #cbd5e1;
+
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+    }
+
+    html, body { height: 100%; overflow: hidden; font-family: var(--font-sans); }
+
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      height: 100vh;
+      background: var(--content-bg);
+    }
+
+    /* ── Sidebar ────────────────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--sidebar-border);
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 20px 16px 16px;
+      border-bottom: 1px solid var(--sidebar-border);
+      flex-shrink: 0;
+    }
+
+    .app-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .app-logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .app-logo-icon svg { width: 18px; height: 18px; fill: white; }
+
+    .app-logo-text {
+      display: flex; flex-direction: column;
+    }
+    .app-name { color: white; font-size: 13px; font-weight: 700; letter-spacing: 0.01em; }
+    .app-sub  { color: var(--sidebar-muted); font-size: 11px; }
+
+    /* Run button */
+    .run-btn {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .run-btn:hover:not(:disabled) { background: var(--green-hover); }
+    .run-btn:disabled { opacity: 0.6; cursor: not-allowed; background: #334155; }
+    .run-btn .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+    .run-btn.running .spinner { display: block; }
+    .run-btn.running .btn-icon { display: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Run status bar */
+    .run-status {
+      margin-top: 10px;
+      font-size: 11.5px;
+      color: var(--sidebar-muted);
+      min-height: 16px;
+      line-height: 1.4;
+    }
+    .run-status.ok    { color: #4ade80; }
+    .run-status.error { color: #f87171; }
+    .run-status.running { color: #60a5fa; }
+
+    /* Sidebar nav */
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .sidebar-nav::-webkit-scrollbar { width: 4px; }
+    .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+
+    .nav-section-label {
+      padding: 14px 16px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--sidebar-muted);
+    }
+
+    .report-item {
+      display: flex;
+      flex-direction: column;
+      padding: 9px 16px 9px 14px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background 0.1s;
+    }
+    .report-item:hover { background: var(--sidebar-hover); }
+    .report-item.active {
+      background: var(--sidebar-active-bg);
+      border-left-color: var(--sidebar-active-border);
+    }
+
+    .report-item-date {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--sidebar-text);
+    }
+    .report-item.active .report-item-date { color: white; }
+
+    .report-item-meta {
+      font-size: 11px;
+      color: var(--sidebar-muted);
+      margin-top: 2px;
+    }
+
+    .report-item-badge {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 1px 7px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 600;
+      background: #1e3a5f;
+      color: #60a5fa;
+    }
+
+    .no-reports-msg {
+      padding: 20px 16px;
+      font-size: 12.5px;
+      color: var(--sidebar-muted);
+      line-height: 1.5;
+    }
+
+    /* Sidebar footer */
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--sidebar-border);
+      font-size: 11px;
+      color: var(--sidebar-muted);
+      flex-shrink: 0;
+    }
+
+    /* ── Main content ───────────────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .main-toolbar {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .report-title-bar {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--content-text);
+    }
+    .report-title-bar .report-title-muted {
+      color: var(--content-muted);
+      font-weight: 400;
+      margin-left: 8px;
+    }
+
+    /* Reader area */
+    .reader {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px 48px 60px;
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Empty / loading states */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--content-muted);
+      text-align: center;
+      gap: 12px;
+      padding: 40px;
+    }
+    .empty-state-icon { font-size: 48px; opacity: 0.4; }
+    .empty-state-title { font-size: 18px; font-weight: 600; color: #334155; }
+    .empty-state-sub { font-size: 14px; max-width: 340px; line-height: 1.5; }
+
+    .loading-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 12px;
+      color: var(--content-muted);
+    }
+    .loading-spinner {
+      width: 20px; height: 20px;
+      border: 3px solid #e2e8f0;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    /* ── Report content styles ──────────────────────────────────────────── */
+    .report-content { line-height: 1.7; color: var(--content-text); }
+
+    .report-content h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .report-content h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 36px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+      letter-spacing: -0.01em;
+    }
+
+    .report-content h3 {
+      font-size: 16.5px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 28px 0 10px;
+      line-height: 1.4;
+    }
+
+    .report-content h3 a {
+      color: #1d4ed8;
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .report-content h3 a:hover {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Metadata row that follows h3 */
+    .report-content h3 + p {
+      font-size: 12.5px;
+      color: var(--content-muted);
+      background: #f1f5f9;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 8px 0 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+      line-height: 1.8;
+    }
+
+    .report-content p { margin: 10px 0; font-size: 15px; }
+
+    .report-content ul {
+      margin: 10px 0 14px 0;
+      padding-left: 20px;
+    }
+    .report-content li {
+      font-size: 14.5px;
+      margin-bottom: 5px;
+      line-height: 1.6;
+    }
+
+    .report-content a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .report-content a:hover {
+      text-decoration: underline;
+      color: var(--accent);
+    }
+
+    /* External link arrow */
+    .report-content a[target="_blank"]::after {
+      content: " ↗";
+      font-size: 0.75em;
+      opacity: 0.6;
+    }
+    /* Don't put arrow on h3 title links */
+    .report-content h3 a::after { display: none; }
+
+    .report-content hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 28px 0;
+    }
+
+    .report-content strong { font-weight: 700; color: #0f172a; }
+
+    /* Inline code → label badges */
+    .report-content code {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 99px;
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid var(--border);
+      letter-spacing: 0.04em;
+    }
+
+    /* Label-specific badge colors (applied via JS) */
+    .report-content code.badge-critical {
+      background: var(--badge-critical-bg);
+      color: var(--badge-critical-text);
+      border-color: var(--badge-critical-border);
+    }
+    .report-content code.badge-high {
+      background: var(--badge-high-bg);
+      color: var(--badge-high-text);
+      border-color: var(--badge-high-border);
+    }
+    .report-content code.badge-medium {
+      background: var(--badge-medium-bg);
+      color: var(--badge-medium-text);
+      border-color: var(--badge-medium-border);
+    }
+    .report-content code.badge-low {
+      background: var(--badge-low-bg);
+      color: var(--badge-low-text);
+      border-color: var(--badge-low-border);
+    }
+
+    /* Tables (source health) */
+    .report-content table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      margin: 12px 0;
+    }
+    .report-content th {
+      background: #f1f5f9;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #475569;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .report-content td {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      color: #334155;
+      vertical-align: top;
+    }
+    .report-content tr:nth-child(even) td { background: #f8fafc; }
+
+    /* Run log panel */
+    .run-log {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #94a3b8;
+      max-height: 280px;
+      overflow-y: auto;
+      line-height: 1.6;
+      margin-top: 16px;
+    }
+    .run-log-line { display: block; }
+    .run-log-line.err { color: #f87171; }
+    .run-log-line.ok  { color: #4ade80; }
+
+    /* Running overlay */
+    .running-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 20px;
+      text-align: center;
+      padding: 40px;
+    }
+    .running-pulse {
+      width: 56px; height: 56px;
+      border: 4px solid #e2e8f0;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    .running-title { font-size: 20px; font-weight: 700; color: #1e293b; }
+    .running-sub   { font-size: 14px; color: var(--content-muted); max-width: 320px; line-height: 1.5; }
+    .running-timer { font-size: 13px; font-family: var(--font-mono); color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-header">
+      <div class="app-logo">
+        <div class="app-logo-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+          </svg>
+        </div>
+        <div class="app-logo-text">
+          <span class="app-name">AI News Monitor</span>
+          <span class="app-sub">JP's Review</span>
+        </div>
+      </div>
+
+      <button class="run-btn" id="runBtn" onclick="startRun()">
+        <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="white">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+        <div class="spinner"></div>
+        <span class="btn-label">Run Now</span>
+      </button>
+
+      <div class="run-status" id="runStatus">Ready</div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+      <div class="no-reports-msg">Loading reports…</div>
+    </nav>
+
+    <div class="sidebar-footer" id="sidebarFooter">
+      9 sources configured
+    </div>
+
+  </aside>
+
+  <!-- ── Main ─────────────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <div class="main-toolbar">
+      <span class="report-title-bar" id="toolbarTitle">
+        AI News Monitor
+        <span class="report-title-muted">Select a report</span>
+      </span>
+    </div>
+
+    <div class="reader" id="reader">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-state-icon">📰</div>
+        <div class="empty-state-title">No report selected</div>
+        <div class="empty-state-sub">
+          Click <strong>Run Now</strong> to fetch the latest AI news,
+          or select a past report from the sidebar.
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+
+let allReports = [];
+let activeFilename = null;
+let pollInterval = null;
+let runTimerInterval = null;
+let runStartTime = null;
+let isRunning = false;
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+
+async function boot() {
+  await loadReports();
+  checkInitialRunState();
+}
+
+async function checkInitialRunState() {
+  // In case the server was already running a job (e.g. page refresh mid-run)
+  try {
+    const res = await fetch('/api/run/status');
+    const data = await res.json();
+    if (data.running) {
+      runStartTime = data.started_at ? new Date(data.started_at) : new Date();
+      setRunning(true);
+      startPolling();
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// ── Reports ──────────────────────────────────────────────────────────────────
+
+async function loadReports() {
+  try {
+    const res = await fetch('/api/reports');
+    const data = await res.json();
+    allReports = data.reports || [];
+    renderSidebar();
+
+    // Auto-load most recent report if nothing is selected
+    if (!activeFilename && allReports.length > 0) {
+      loadReport(allReports[0].filename);
+    } else if (allReports.length === 0) {
+      showEmpty();
+    }
+  } catch (e) {
+    console.error('Failed to load reports:', e);
+  }
+}
+
+function renderSidebar() {
+  const nav = document.getElementById('sidebarNav');
+
+  if (allReports.length === 0) {
+    nav.innerHTML = `<div class="no-reports-msg">
+      No reports yet.<br>Click <strong style="color:#e2e8f0">Run Now</strong> to get started.
+    </div>`;
+    return;
+  }
+
+  const current = allReports[0];
+  const past = allReports.slice(1);
+
+  let html = '';
+
+  // Current Updates
+  html += `<div class="nav-section-label">Current Updates</div>`;
+  html += reportItemHTML(current, true);
+
+  // Past Reviews
+  if (past.length > 0) {
+    html += `<div class="nav-section-label" style="margin-top:8px">Past Reviews</div>`;
+    past.forEach(r => { html += reportItemHTML(r, false); });
+  }
+
+  nav.innerHTML = html;
+
+  // Re-mark active
+  if (activeFilename) {
+    markActive(activeFilename);
+  }
+}
+
+function reportItemHTML(report, isCurrent) {
+  const count = report.item_count;
+  const countStr = count > 0 ? `${count} item${count !== 1 ? 's' : ''}` : 'no items';
+  const badge = isCurrent ? `<span class="report-item-badge">Latest</span>` : '';
+
+  return `
+    <div class="report-item" id="item-${report.filename.replace('.', '-')}"
+         onclick="loadReport('${report.filename}')">
+      <span class="report-item-date">${report.display_date}</span>
+      <span class="report-item-meta">${countStr}</span>
+      ${badge}
+    </div>`;
+}
+
+async function loadReport(filename) {
+  activeFilename = filename;
+  markActive(filename);
+  updateToolbar(filename);
+  showLoading();
+
+  try {
+    const res = await fetch(`/api/reports/${encodeURIComponent(filename)}`);
+    const data = await res.json();
+    renderReport(data);
+  } catch (e) {
+    showError('Failed to load report.');
+  }
+}
+
+function renderReport(data) {
+  const reader = document.getElementById('reader');
+  reader.innerHTML = `<div class="report-content" id="reportContent">${data.html}</div>`;
+  postProcessReport();
+  reader.scrollTop = 0;
+}
+
+function postProcessReport() {
+  const content = document.getElementById('reportContent');
+  if (!content) return;
+
+  // Color-code label badges: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`
+  content.querySelectorAll('code').forEach(el => {
+    const t = el.textContent.trim().toLowerCase();
+    if (['critical', 'high', 'medium', 'low'].includes(t)) {
+      el.classList.add(`badge-${t}`);
+    }
+  });
+}
+
+// ── Toolbar ───────────────────────────────────────────────────────────────────
+
+function updateToolbar(filename) {
+  const report = allReports.find(r => r.filename === filename);
+  const title = document.getElementById('toolbarTitle');
+  if (report) {
+    title.innerHTML = `AI News Summary
+      <span class="report-title-muted">— ${report.display_date}
+        ${report.item_count > 0 ? '· ' + report.item_count + ' items' : ''}
+      </span>`;
+  }
+}
+
+// ── Active state ─────────────────────────────────────────────────────────────
+
+function markActive(filename) {
+  document.querySelectorAll('.report-item').forEach(el => {
+    el.classList.remove('active');
+  });
+  const id = `item-${filename.replace('.', '-')}`;
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+// ── Run pipeline ─────────────────────────────────────────────────────────────
+
+async function startRun() {
+  if (isRunning) return;
+
+  try {
+    const res = await fetch('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      setStatus(data.error, 'error');
+      return;
+    }
+
+    runStartTime = new Date();
+    setRunning(true);
+    showRunningOverlay();
+    startPolling();
+
+  } catch (e) {
+    setStatus('Could not connect to server.', 'error');
+  }
+}
+
+function startPolling() {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(pollRunStatus, 2000);
+}
+
+async function pollRunStatus() {
+  try {
+    const res = await fetch('/api/run/status');
+    const data = await res.json();
+
+    updateRunningOverlayLog(data.output || []);
+
+    if (!data.running) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+      onRunComplete(data);
+    }
+  } catch (e) { /* ignore transient errors */ }
+}
+
+function onRunComplete(data) {
+  setRunning(false);
+  const ok = data.exit_code === 0;
+  setStatus(
+    ok ? `Completed · ${formatTime(new Date(data.finished_at))}` : `Failed (exit ${data.exit_code})`,
+    ok ? 'ok' : 'error'
+  );
+
+  // Reload report list and auto-load new report
+  loadReports().then(() => {
+    if (allReports.length > 0 && ok) {
+      loadReport(allReports[0].filename);
+    } else if (!ok) {
+      showRunFailedView(data);
+    }
+  });
+}
+
+// ── Running overlay ───────────────────────────────────────────────────────────
+
+function showRunningOverlay() {
+  const reader = document.getElementById('reader');
+  reader.innerHTML = `
+    <div class="running-overlay">
+      <div class="running-pulse"></div>
+      <div class="running-title">Fetching AI News…</div>
+      <div class="running-sub">
+        Checking all sources, deduplicating, ranking, and building your report.
+        This usually takes 30–90 seconds.
+      </div>
+      <div class="running-timer" id="runTimer">0:00</div>
+      <div class="run-log" id="runLog"></div>
+    </div>`;
+
+  // Start elapsed timer
+  if (runTimerInterval) clearInterval(runTimerInterval);
+  runTimerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - runStartTime) / 1000);
+    const m = Math.floor(elapsed / 60);
+    const s = elapsed % 60;
+    const el = document.getElementById('runTimer');
+    if (el) el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  }, 1000);
+}
+
+function updateRunningOverlayLog(lines) {
+  const logEl = document.getElementById('runLog');
+  if (!logEl || !lines.length) return;
+  logEl.innerHTML = lines.slice(-30).map(line => {
+    const cls = line.includes('ERROR') || line.includes('FAILED') ? 'err'
+               : line.includes('complete') || line.includes('success') ? 'ok'
+               : '';
+    return `<span class="run-log-line ${cls}">${escapeHTML(line)}</span>`;
+  }).join('\n');
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function showRunFailedView(data) {
+  clearInterval(runTimerInterval);
+  runTimerInterval = null;
+  const lines = (data.output || []).slice(-50);
+  const reader = document.getElementById('reader');
+  reader.innerHTML = `
+    <div class="running-overlay">
+      <div class="empty-state-icon" style="font-size:40px">⚠️</div>
+      <div class="running-title" style="color:#dc2626">Run Failed</div>
+      <div class="running-sub">Exit code ${data.exit_code}. Check the log below for details.</div>
+      <div class="run-log" style="width:100%;max-width:600px">${
+        lines.map(l => `<span class="run-log-line ${l.includes('ERROR') ? 'err' : ''}">${escapeHTML(l)}</span>`).join('\n')
+      }</div>
+    </div>`;
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+
+function setRunning(running) {
+  isRunning = running;
+  const btn = document.getElementById('runBtn');
+  const label = btn.querySelector('.btn-label');
+  if (running) {
+    btn.disabled = true;
+    btn.classList.add('running');
+    label.textContent = 'Running…';
+    setStatus('Fetching news…', 'running');
+  } else {
+    btn.disabled = false;
+    btn.classList.remove('running');
+    label.textContent = 'Run Now';
+    if (runTimerInterval) { clearInterval(runTimerInterval); runTimerInterval = null; }
+  }
+}
+
+function setStatus(msg, type = '') {
+  const el = document.getElementById('runStatus');
+  el.textContent = msg;
+  el.className = `run-status ${type}`;
+}
+
+function showEmpty() {
+  const reader = document.getElementById('reader');
+  reader.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-state-icon">📰</div>
+      <div class="empty-state-title">No reports yet</div>
+      <div class="empty-state-sub">
+        Click <strong>Run Now</strong> to fetch the latest AI news across
+        OpenAI, Anthropic, DeepMind, Hugging Face, TechCrunch, and more.
+      </div>
+    </div>`;
+}
+
+function showLoading() {
+  const reader = document.getElementById('reader');
+  reader.innerHTML = `
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <span style="color:#64748b;font-size:14px">Loading report…</span>
+    </div>`;
+}
+
+function showError(msg) {
+  const reader = document.getElementById('reader');
+  reader.innerHTML = `<div class="empty-state">
+    <div class="empty-state-icon">⚠️</div>
+    <div class="empty-state-title">Error</div>
+    <div class="empty-state-sub">${escapeHTML(msg)}</div>
+  </div>`;
+}
+
+function formatTime(date) {
+  if (!date || isNaN(date)) return '';
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function escapeHTML(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+boot();
+</script>
+</body>
+</html>

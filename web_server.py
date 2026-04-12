@@ -1,0 +1,332 @@
+"""
+AI News Monitor - Local Web Server
+
+Serves a browser UI at http://localhost:5000
+
+  python web_server.py          # start server (opens browser automatically)
+  python web_server.py --port 8080  # custom port
+  python web_server.py --no-browser # don't auto-open browser
+
+API routes:
+  GET  /                        Serve the UI
+  GET  /api/reports             List all reports (metadata)
+  GET  /api/reports/<filename>  Get rendered HTML of a specific report
+  POST /api/run                 Start a new pipeline run
+  GET  /api/run/status          Poll current run state
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+import threading
+import webbrowser
+from datetime import datetime, timezone
+from pathlib import Path
+
+from flask import Flask, jsonify, request, send_from_directory
+
+# ─── Paths ────────────────────────────────────────────────────────────────────
+
+PROJECT_ROOT = Path(__file__).parent
+REPORTS_DIR = PROJECT_ROOT / "reports"
+TEMPLATES_DIR = PROJECT_ROOT / "templates"
+
+# ─── App ──────────────────────────────────────────────────────────────────────
+
+app = Flask(__name__, static_folder=None)
+
+# ─── Run state (thread-safe via lock) ─────────────────────────────────────────
+
+_run_lock = threading.Lock()
+_run_state: dict = {
+    "running": False,
+    "started_at": None,
+    "finished_at": None,
+    "exit_code": None,
+    "output": [],
+}
+
+
+# ─── Routes: UI ───────────────────────────────────────────────────────────────
+
+
+@app.route("/")
+def index():
+    return send_from_directory(str(TEMPLATES_DIR), "index.html")
+
+
+# ─── Routes: Reports ──────────────────────────────────────────────────────────
+
+
+@app.route("/api/reports")
+def list_reports():
+    """Return a list of all report files with metadata."""
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    files = sorted(REPORTS_DIR.glob("*.md"), reverse=True)
+
+    reports = []
+    for f in files:
+        reports.append(_report_meta(f))
+
+    return jsonify({"reports": reports})
+
+
+@app.route("/api/reports/<path:filename>")
+def get_report(filename: str):
+    """Return a report rendered as HTML."""
+    # Security: only allow .md files from REPORTS_DIR
+    safe_name = Path(filename).name
+    if not safe_name.endswith(".md"):
+        return jsonify({"error": "invalid file"}), 400
+
+    path = REPORTS_DIR / safe_name
+    if not path.exists():
+        return jsonify({"error": "not found"}), 404
+
+    raw_md = path.read_text(encoding="utf-8")
+    html = _render_markdown(raw_md)
+
+    return jsonify({
+        "filename": safe_name,
+        "html": html,
+        **_report_meta(path),
+    })
+
+
+# ─── Routes: Run ──────────────────────────────────────────────────────────────
+
+
+@app.route("/api/run", methods=["POST"])
+def start_run():
+    """Start a new pipeline run in a background thread."""
+    with _run_lock:
+        if _run_state["running"]:
+            return jsonify({"error": "A run is already in progress"}), 409
+
+        _run_state["running"] = True
+        _run_state["started_at"] = _iso_now()
+        _run_state["finished_at"] = None
+        _run_state["exit_code"] = None
+        _run_state["output"] = []
+
+    # Parse optional args from request body
+    body = request.get_json(silent=True) or {}
+    extra_args = []
+    if body.get("force_refresh"):
+        extra_args.append("--force-full-refresh")
+    if body.get("since"):
+        extra_args += ["--since", body["since"]]
+
+    thread = threading.Thread(
+        target=_run_pipeline,
+        args=(extra_args,),
+        daemon=True,
+    )
+    thread.start()
+
+    return jsonify({"started": True, "started_at": _run_state["started_at"]})
+
+
+@app.route("/api/run/status")
+def run_status():
+    """Return the current run state (for polling)."""
+    with _run_lock:
+        state = dict(_run_state)
+    return jsonify(state)
+
+
+# ─── Background pipeline runner ───────────────────────────────────────────────
+
+
+def _run_pipeline(extra_args: list[str]) -> None:
+    """Run main.py in a subprocess. Updates _run_state on completion."""
+    cmd = [sys.executable, str(PROJECT_ROOT / "main.py")] + extra_args
+    output_lines: list[str] = []
+
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            cwd=str(PROJECT_ROOT),
+        )
+        for line in proc.stdout:
+            clean = line.rstrip()
+            output_lines.append(clean)
+        proc.wait()
+        exit_code = proc.returncode
+    except Exception as exc:
+        output_lines.append(f"[ERROR] Failed to start pipeline: {exc}")
+        exit_code = -1
+
+    with _run_lock:
+        _run_state["running"] = False
+        _run_state["finished_at"] = _iso_now()
+        _run_state["exit_code"] = exit_code
+        _run_state["output"] = output_lines
+
+
+# ─── Markdown renderer ────────────────────────────────────────────────────────
+
+
+def _render_markdown(md_text: str) -> str:
+    """
+    Convert Markdown to HTML.
+    Uses the markdown library if available; falls back to a minimal converter.
+    Post-processes links to open in new tab.
+    """
+    try:
+        import markdown
+        html = markdown.markdown(
+            md_text,
+            extensions=["tables", "fenced_code", "nl2br", "sane_lists"],
+        )
+    except ImportError:
+        html = _minimal_md_to_html(md_text)
+
+    # Make all links open in new tab
+    html = re.sub(
+        r'<a href="([^"]+)"',
+        r'<a href="\1" target="_blank" rel="noopener noreferrer"',
+        html,
+    )
+
+    return html
+
+
+def _minimal_md_to_html(md: str) -> str:
+    """Very basic Markdown → HTML fallback (no external deps)."""
+    lines = md.split("\n")
+    out = []
+    in_ul = False
+
+    for line in lines:
+        # Headings
+        if line.startswith("### "):
+            if in_ul: out.append("</ul>"); in_ul = False
+            content = _inline_md(line[4:])
+            out.append(f"<h3>{content}</h3>")
+        elif line.startswith("## "):
+            if in_ul: out.append("</ul>"); in_ul = False
+            out.append(f"<h2>{_inline_md(line[3:])}</h2>")
+        elif line.startswith("# "):
+            if in_ul: out.append("</ul>"); in_ul = False
+            out.append(f"<h1>{_inline_md(line[2:])}</h1>")
+        # Horizontal rule
+        elif line.strip() == "---":
+            if in_ul: out.append("</ul>"); in_ul = False
+            out.append("<hr>")
+        # Bullet list
+        elif line.startswith("- "):
+            if not in_ul: out.append("<ul>"); in_ul = True
+            out.append(f"<li>{_inline_md(line[2:])}</li>")
+        # Empty line
+        elif line.strip() == "":
+            if in_ul: out.append("</ul>"); in_ul = False
+            out.append("")
+        else:
+            if in_ul: out.append("</ul>"); in_ul = False
+            out.append(f"<p>{_inline_md(line)}</p>")
+
+    if in_ul:
+        out.append("</ul>")
+
+    return "\n".join(out)
+
+
+def _inline_md(text: str) -> str:
+    """Process inline Markdown: bold, code, links."""
+    # Links: [text](url)
+    text = re.sub(
+        r'\[([^\]]+)\]\(([^)]+)\)',
+        r'<a href="\2" target="_blank" rel="noopener noreferrer">\1</a>',
+        text,
+    )
+    # Bold: **text**
+    text = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', text)
+    # Inline code: `text`
+    text = re.sub(r'`([^`]+)`', r'<code>\1</code>', text)
+    return text
+
+
+# ─── Report metadata helper ───────────────────────────────────────────────────
+
+
+def _report_meta(path: Path) -> dict:
+    """Extract display metadata from a report file."""
+    name = path.name
+
+    # Parse date from filename: YYYY-MM-DD-ai-news-summary.md
+    date_match = re.match(r"^(\d{4}-\d{2}-\d{2})", name)
+    date_str = date_match.group(1) if date_match else "Unknown date"
+
+    # Parse a human-friendly date
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+        display_date = dt.strftime("%b %d, %Y")
+    except ValueError:
+        display_date = date_str
+
+    # Quick scan: count h3 headings (= article entries) and check for metadata
+    item_count = 0
+    sources_checked = None
+    try:
+        text = path.read_text(encoding="utf-8")
+        item_count = text.count("\n### ")
+        # Try to extract "Sources checked: N" from metadata
+        m = re.search(r"\*\*Sources checked:\*\* (\d+)", text)
+        if m:
+            sources_checked = int(m.group(1))
+    except Exception:
+        pass
+
+    return {
+        "filename": name,
+        "date": date_str,
+        "display_date": display_date,
+        "item_count": item_count,
+        "sources_checked": sources_checked,
+        "size_bytes": path.stat().st_size,
+        "modified_at": datetime.fromtimestamp(
+            path.stat().st_mtime, tz=timezone.utc
+        ).isoformat(),
+    }
+
+
+# ─── Helpers ──────────────────────────────────────────────────────────────────
+
+
+def _iso_now() -> str:
+    return datetime.now(tz=timezone.utc).isoformat()
+
+
+# ─── Entry point ──────────────────────────────────────────────────────────────
+
+
+def main():
+    parser = argparse.ArgumentParser(description="AI News Monitor Web UI")
+    parser.add_argument("--port", type=int, default=5000, help="Port (default: 5000)")
+    parser.add_argument("--host", default="127.0.0.1", help="Host (default: 127.0.0.1)")
+    parser.add_argument("--no-browser", action="store_true", help="Don't open browser")
+    args = parser.parse_args()
+
+    TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    url = f"http://{args.host}:{args.port}"
+    print(f"\n  AI News Monitor running at {url}")
+    print("  Press Ctrl+C to stop.\n")
+
+    if not args.no_browser:
+        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+
+    app.run(host=args.host, port=args.port, debug=False, use_reloader=False)
+
+
+if __name__ == "__main__":
+    main()

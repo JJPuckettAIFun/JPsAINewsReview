@@ -1,0 +1,26 @@
+# AI News Monitor - Python dependencies
+#
+# Install with:
+#   pip install -r requirements.txt
+#
+# Python >= 3.10 required (uses match statements and newer type hints)
+
+# HTTP and feed parsing
+feedparser>=6.0.10
+requests>=2.31.0
+
+# HTML parsing
+beautifulsoup4>=4.12.0
+
+# YAML config
+PyYAML>=6.0
+
+# Date parsing utilities
+python-dateutil>=2.8.2
+
+# Web UI
+flask>=3.0.0
+markdown>=3.5.0
+
+# Testing
+pytest>=7.4.0
