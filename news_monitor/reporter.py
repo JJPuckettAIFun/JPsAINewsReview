@@ -246,7 +246,7 @@ def print_terminal_summary(report: Report, top_n: Optional[int] = None) -> None:
 
     ws = meta.window_start.strftime("%Y-%m-%d") if meta.window_start else "?"
     we = meta.window_end.strftime("%Y-%m-%d") if meta.window_end else "?"
-    print(f"  Window: {ws} → {we}")
+    print(f"  Window: {ws} -> {we}")
     print(f"  Sources checked: {meta.sources_checked}  |  "
           f"Items selected: {meta.articles_selected}")
 

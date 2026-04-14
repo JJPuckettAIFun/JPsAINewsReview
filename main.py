@@ -269,12 +269,19 @@ def _execute_pipeline(
     logger.info("Total raw articles collected: %d", len(all_raw))
 
     # ── Date filtering ────────────────────────────────────────────────────────
+    # Only hard-reject articles that are clearly older than the lookback window.
+    # We add a 48-hour buffer before window_start to handle clock skew, feeds
+    # that batch-publish with stale dates, and timezone mismatches.
+    # The seen-URL dedup layer below is the real gatekeeper for "already reported".
+    from datetime import timedelta
+    date_floor = window_start - timedelta(hours=48)
+
     date_filtered = []
     for article in all_raw:
         if article.published_at is None:
-            # Keep articles with no date (better to include than miss)
+            # No date — keep it; dedup will catch it if seen before
             date_filtered.append(article)
-        elif article.published_at >= window_start:
+        elif article.published_at >= date_floor:
             date_filtered.append(article)
 
     logger.info("After date filter: %d articles", len(date_filtered))
@@ -299,12 +306,13 @@ def _execute_pipeline(
         meta.status = "success"
         meta.finished_at = utcnow()
         meta.articles_selected = 0
-        finish_run(run_id, meta)
 
-        # Write empty report
+        # Write report BEFORE finish_run so report_path is saved to the DB
         report = _build_report(meta, [], [], config)
         report_path = write_markdown(report)
         meta.report_path = str(report_path)
+        finish_run(run_id, meta)
+
         if args.json:
             write_json(report)
         if not args.quiet:
@@ -433,14 +441,14 @@ def _execute_pipeline(
     meta.status = "success"
     meta.finished_at = utcnow()
 
-    # ── Write state ───────────────────────────────────────────────────────────
-    finish_run(run_id, meta)
-
-    # ── Build and write report ────────────────────────────────────────────────
+    # ── Build and write report BEFORE finish_run so report_path is saved ─────
     source_health = get_all_source_health()
     report = _build_report(meta, top_clusters, honorable, config, source_health)
     report_path = write_markdown(report)
     meta.report_path = str(report_path)
+
+    # ── Write state ───────────────────────────────────────────────────────────
+    finish_run(run_id, meta)
 
     if args.json:
         write_json(report)

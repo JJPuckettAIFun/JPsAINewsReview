@@ -4,6 +4,28 @@ A local Python CLI tool that monitors trusted AI news sources and reports only n
 
 ---
 
+## Changelog
+
+### v1.2.0 — 2026-04-14
+**Delete Run**
+- Added a trash icon button to each report in the sidebar of the web UI.
+- Clicking it deletes the report file **and** removes its run record and seen-article history from the database, so those articles will surface again on the next run.
+- Useful for re-running after a bug fix or when a run returned 0 results unexpectedly.
+
+**Date filter loosened**
+- Added a 48-hour buffer before `window_start` so articles with slightly stale or batched timestamps are no longer incorrectly dropped.
+- The seen-URL dedup layer remains the primary mechanism for avoiding re-reporting — the date filter is now a loose safety net rather than a hard cutoff.
+
+**Summarizer fix — no more duplicate summary/bullet**
+- The summary paragraph now draws up to 3–4 sentences from the feed description.
+- Bullet points are built exclusively from sentences **not** already used in the summary, with an overlap check to prevent near-identical phrasing from sneaking through.
+- Falls back gracefully to title sub-phrases (de-duplicated against the summary) when the feed description is too short.
+
+**Windows terminal fix**
+- Replaced the `→` arrow in terminal output with `->` to prevent a `UnicodeEncodeError` on Windows systems using the `cp1252` codec.
+
+---
+
 ## Purpose
 
 When you run this tool, you get a concise ranked summary of important new AI developments across trusted sources — model releases, research, policy, safety, infrastructure, agents, and more — with links, summaries, bullet points, and "why it matters" context for each item.

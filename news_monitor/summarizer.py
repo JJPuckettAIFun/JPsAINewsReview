@@ -6,8 +6,9 @@ This is entirely local (no LLM calls) using the raw article's title,
 summary/description from the feed, category, and topic matches.
 
 Strategy:
-  summary:          clean up and truncate the feed description (1-2 sentences)
-  bullets:          extract 2-4 key phrases or sentence fragments
+  summary:          3-4 sentences drawn from the feed description
+  bullets:          2-4 key takeaways drawn from sentences NOT already
+                    used in the summary — so they never duplicate it
   why_it_matters:   template-based sentence using category + source type
 """
 
@@ -16,7 +17,7 @@ from __future__ import annotations
 import re
 from typing import Optional
 
-from .utils import truncate, first_sentences
+from .utils import truncate
 
 
 # ─── Why-it-matters templates ─────────────────────────────────────────────────
@@ -67,11 +68,29 @@ _WHY_TEMPLATES: dict[str, str] = {
 
 def _why_it_matters(category: str, source_type: str, title: str) -> str:
     base = _WHY_TEMPLATES.get(category, _WHY_TEMPLATES["other"])
-    if source_type == "official":
-        prefix = "From a primary source: "
-    else:
-        prefix = ""
+    prefix = "From a primary source: " if source_type == "official" else ""
     return prefix + base
+
+
+# ─── Sentence splitter ────────────────────────────────────────────────────────
+
+def _split_sentences(text: str) -> list[str]:
+    """Split text into individual sentences, stripping empties."""
+    raw = re.split(r"(?<=[.!?])\s+", text.strip())
+    return [s.strip() for s in raw if len(s.strip()) >= 20]
+
+
+def _sentences_overlap(a: str, b: str, threshold: float = 0.6) -> bool:
+    """
+    Return True if sentence b is substantially contained within sentence a.
+    Uses word-overlap ratio so near-identical phrasings are caught too.
+    """
+    words_a = set(re.findall(r"\b\w+\b", a.lower()))
+    words_b = set(re.findall(r"\b\w+\b", b.lower()))
+    if not words_b:
+        return False
+    overlap = len(words_a & words_b) / len(words_b)
+    return overlap >= threshold
 
 
 # ─── Summarizer ───────────────────────────────────────────────────────────────
@@ -89,61 +108,68 @@ class Summarizer:
     ) -> tuple[str, list[str], str]:
         """
         Returns (summary_paragraph, bullets, why_it_matters).
+
+        The summary and bullets are always drawn from different sentences so
+        they never duplicate each other.
         """
-        # Summary paragraph
-        if raw_summary and len(raw_summary.strip()) > 40:
-            text = raw_summary.strip()
-            # Take up to 2 sentences, max 400 chars
-            summary = truncate(first_sentences(text, 2), 400)
+        text = (raw_summary or "").strip()
+        sentences = _split_sentences(text) if text else []
+
+        # ── Summary: first 3-4 usable sentences, max 600 chars ───────────────
+        summary_sentences: list[str] = []
+        for sent in sentences:
+            # Skip very short or very long sentences
+            if len(sent) < 25 or len(sent) > 400:
+                continue
+            summary_sentences.append(sent)
+            # Stop at 4 sentences or ~600 chars
+            if len(summary_sentences) >= 4:
+                break
+            if sum(len(s) for s in summary_sentences) >= 600:
+                break
+
+        if summary_sentences:
+            summary = " ".join(summary_sentences)
         else:
-            # Fall back to a generic descriptor from the title
-            summary = f"{title.strip()}."
+            # No usable feed text — build a one-liner from the title
+            summary = (
+                f"{title.strip().rstrip('.')}. "
+                f"See the full article for details."
+            )
 
-        # Bullet points: extract key phrases
-        bullets = self._extract_bullets(title, raw_summary or "", topic_matches)
+        # ── Bullets: sentences NOT already used in the summary ───────────────
+        summary_set = set(summary_sentences)
+        remaining = [s for s in sentences if s not in summary_set]
 
-        # Why it matters
+        bullets: list[str] = []
+        for sent in remaining:
+            if len(sent) < 30 or len(sent) > 220:
+                continue
+            # Skip if it heavily overlaps with an already-chosen bullet
+            if any(_sentences_overlap(b, sent) for b in bullets):
+                continue
+            # Skip if it heavily overlaps with the summary itself
+            if _sentences_overlap(summary, sent, threshold=0.7):
+                continue
+            bullets.append(sent)
+            if len(bullets) >= 4:
+                break
+
+        # ── Fallback bullets from title phrases ──────────────────────────────
+        if len(bullets) < 2:
+            parts = re.split(r"[:\-–|,]", title)
+            for part in parts:
+                part = part.strip().rstrip(".")
+                if len(part) > 20 and not _sentences_overlap(summary, part, threshold=0.5):
+                    if part not in bullets:
+                        bullets.append(part)
+            # Last resort: a single "Read the full article" note
+            if not bullets:
+                bullets = ["Read the full article for complete details."]
+
+        bullets = bullets[:4]
+
+        # ── Why it matters ────────────────────────────────────────────────────
         why = _why_it_matters(category, source_type, title)
 
         return summary, bullets, why
-
-    def _extract_bullets(
-        self,
-        title: str,
-        text: str,
-        topic_matches: list[str],
-    ) -> list[str]:
-        """
-        Extract 2-4 bullet points from available text.
-        Prefers short complete sentences; falls back to phrases.
-        """
-        bullets: list[str] = []
-
-        # Candidate sentences from body text
-        if text:
-            sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-            # Pick sentences that look informative (not too short, not too long)
-            for sent in sentences:
-                sent = sent.strip()
-                if 30 <= len(sent) <= 200:
-                    bullets.append(sent)
-                if len(bullets) >= 4:
-                    break
-
-        # If we got fewer than 2 bullets, extract from title
-        if len(bullets) < 2:
-            # Split title on common separators to get sub-phrases
-            parts = re.split(r"[:\-–|,]", title)
-            for part in parts:
-                part = part.strip()
-                if len(part) > 15:
-                    cleaned = part.strip().rstrip(".")
-                    if cleaned not in bullets:
-                        bullets.append(cleaned)
-
-        # Ensure minimum 2, maximum 4
-        bullets = bullets[:4]
-        if not bullets:
-            bullets = [title.strip()]
-
-        return bullets

@@ -8,11 +8,13 @@ Serves a browser UI at http://localhost:5000
   python web_server.py --no-browser # don't auto-open browser
 
 API routes:
-  GET  /                        Serve the UI
-  GET  /api/reports             List all reports (metadata)
-  GET  /api/reports/<filename>  Get rendered HTML of a specific report
-  POST /api/run                 Start a new pipeline run
-  GET  /api/run/status          Poll current run state
+  GET    /                        Serve the UI
+  GET    /api/reports             List all reports (metadata)
+  GET    /api/reports/<filename>  Get rendered HTML of a specific report
+  DELETE /api/reports/<filename>  Delete a report and its run history
+  POST   /api/history/clear       Wipe all seen-article history (keeps report files)
+  POST   /api/run                 Start a new pipeline run
+  GET    /api/run/status          Poll current run state
 """
 
 from __future__ import annotations
@@ -28,6 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
+from news_monitor.storage import delete_run, clear_seen_state, init_db
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
 
@@ -95,6 +98,60 @@ def get_report(filename: str):
         "html": html,
         **_report_meta(path),
     })
+
+
+@app.route("/api/reports/<path:filename>", methods=["DELETE"])
+def delete_report(filename: str):
+    """
+    Delete a report file and remove its run record + seen articles from the DB.
+    This allows the same articles to surface again on the next run.
+    """
+    safe_name = Path(filename).name
+    if not safe_name.endswith(".md"):
+        return jsonify({"error": "invalid file"}), 400
+
+    path = REPORTS_DIR / safe_name
+    if not path.exists():
+        return jsonify({"error": "not found"}), 404
+
+    # Remove run record and seen_articles from DB
+    result = delete_run(str(path))
+
+    # Delete the report file itself
+    try:
+        path.unlink()
+    except Exception as exc:
+        return jsonify({"error": f"could not delete file: {exc}"}), 500
+
+    return jsonify({
+        "deleted": safe_name,
+        "run_id": result.get("run_id"),
+        "articles_removed": result.get("articles_removed", 0),
+        "run_found": result.get("found", False),
+    })
+
+
+# ─── Routes: History ─────────────────────────────────────────────────────────
+
+
+@app.route("/api/history/clear", methods=["POST"])
+def clear_history():
+    """
+    Wipe all seen-article history and run records so the next run
+    treats everything as new (14-day first-run lookback).
+    Report files on disk are NOT deleted.
+    """
+    try:
+        init_db()
+        # Clear seen articles and clusters
+        clear_seen_state()
+        # Also wipe the runs table so last-successful-run returns None
+        from news_monitor.storage import _db
+        with _db() as conn:
+            conn.execute("DELETE FROM runs")
+        return jsonify({"cleared": True})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 # ─── Routes: Run ──────────────────────────────────────────────────────────────

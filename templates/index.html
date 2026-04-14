@@ -3,533 +3,758 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI News Monitor</title>
+  <title>The Brief — AI News Monitor</title>
   <style>
-    /* ── Reset & base ───────────────────────────────────────────────────── */
+    /* ── Reset ─────────────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── Design tokens ─────────────────────────────────────────────────────── */
     :root {
-      --sidebar-w: 272px;
-      --sidebar-bg: #0f172a;
-      --sidebar-border: #1e293b;
-      --sidebar-text: #cbd5e1;
-      --sidebar-muted: #64748b;
-      --sidebar-hover: #1e293b;
-      --sidebar-active-bg: #1e3a5f;
-      --sidebar-active-border: #3b82f6;
-      --header-bg: #0f172a;
+      /* Palette: warm charcoal + parchment + terracotta */
+      --ink:          #1A1715;
+      --ink-mid:      #4A4440;
+      --ink-light:    #8A827A;
+      --ink-faint:    #B8B0A8;
 
-      --content-bg: #f8fafc;
-      --content-text: #0f172a;
-      --content-muted: #64748b;
-      --border: #e2e8f0;
+      --parchment:    #F8F5EE;
+      --parchment-2:  #F0EBE1;
+      --white:        #FFFFFF;
 
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --green: #22c55e;
-      --green-hover: #16a34a;
+      --accent:       #C4541A;   /* terracotta — the ONLY color */
+      --accent-dark:  #A0431A;
+      --accent-wash:  rgba(196, 84, 26, 0.08);
+      --accent-light: #F5E8DF;
 
-      --badge-critical-bg: #fef2f2; --badge-critical-text: #dc2626; --badge-critical-border: #fca5a5;
-      --badge-high-bg: #fff7ed;    --badge-high-text: #ea580c;    --badge-high-border: #fdba74;
-      --badge-medium-bg: #eff6ff;  --badge-medium-text: #2563eb;  --badge-medium-border: #93c5fd;
-      --badge-low-bg: #f8fafc;     --badge-low-text: #64748b;     --badge-low-border: #cbd5e1;
+      --rule:         rgba(26, 23, 21, 0.12);
+      --rule-strong:  rgba(26, 23, 21, 0.25);
 
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      --font-mono: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+      /* Sidebar */
+      --sb-bg:        #1A1715;
+      --sb-rule:      rgba(255, 255, 255, 0.07);
+      --sb-text:      #E0D8CE;
+      --sb-muted:     #6E6560;
+      --sb-hover:     rgba(255, 255, 255, 0.04);
+      --sb-active-bg: rgba(196, 84, 26, 0.14);
+
+      --sidebar-w:    268px;
+
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono: "SF Mono", "Fira Code", Consolas, monospace;
     }
 
-    html, body { height: 100%; overflow: hidden; font-family: var(--font-sans); }
+    html, body { height: 100%; overflow: hidden; font-family: var(--font); background: var(--parchment); color: var(--ink); }
 
-    /* ── Layout ─────────────────────────────────────────────────────────── */
-    .layout {
+    /* ── Layout ─────────────────────────────────────────────────────────────── */
+    .shell {
       display: flex;
       height: 100vh;
-      background: var(--content-bg);
     }
 
-    /* ── Sidebar ────────────────────────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════════════════════════════════════════ */
     .sidebar {
       width: var(--sidebar-w);
       min-width: var(--sidebar-w);
-      background: var(--sidebar-bg);
+      background: var(--sb-bg);
       display: flex;
       flex-direction: column;
-      border-right: 1px solid var(--sidebar-border);
+      border-right: 1px solid var(--sb-rule);
       overflow: hidden;
     }
 
-    .sidebar-header {
-      padding: 20px 16px 16px;
-      border-bottom: 1px solid var(--sidebar-border);
+    /* ── Masthead ─────────────────────────────────────────────────────────── */
+    .masthead {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--sb-rule);
       flex-shrink: 0;
     }
 
-    .app-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
+    .masthead-eyebrow {
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--sb-muted);
+      margin-bottom: 3px;
     }
 
-    .app-logo-icon {
-      width: 32px; height: 32px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
+    .masthead-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--sb-text);
+      letter-spacing: 0.01em;
+    }
+
+    .masthead-title span {
+      color: var(--accent);
+    }
+
+    /* ── Run section ──────────────────────────────────────────────────────── */
+    .run-section {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--sb-rule);
       flex-shrink: 0;
     }
 
-    .app-logo-icon svg { width: 18px; height: 18px; fill: white; }
-
-    .app-logo-text {
-      display: flex; flex-direction: column;
-    }
-    .app-name { color: white; font-size: 13px; font-weight: 700; letter-spacing: 0.01em; }
-    .app-sub  { color: var(--sidebar-muted); font-size: 11px; }
-
-    /* Run button */
     .run-btn {
       width: 100%;
       padding: 10px 14px;
-      background: var(--green);
-      color: white;
+      background: var(--accent);
+      color: #fff;
       border: none;
-      border-radius: 8px;
-      font-size: 13.5px;
-      font-weight: 600;
+      border-radius: 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: background 0.15s, opacity 0.15s;
+      transition: background 0.15s;
+      position: relative;
     }
-    .run-btn:hover:not(:disabled) { background: var(--green-hover); }
-    .run-btn:disabled { opacity: 0.6; cursor: not-allowed; background: #334155; }
+
+    .run-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(255,255,255,0.15);
+      pointer-events: none;
+    }
+
+    .run-btn:hover:not(:disabled) { background: var(--accent-dark); }
+    .run-btn:disabled { background: #333; color: var(--sb-muted); cursor: not-allowed; }
+    .run-btn:disabled::after { display: none; }
+
     .run-btn .spinner {
-      width: 14px; height: 14px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: white;
+      width: 12px; height: 12px;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: spin 0.75s linear infinite;
       display: none;
+      flex-shrink: 0;
     }
     .run-btn.running .spinner { display: block; }
     .run-btn.running .btn-icon { display: none; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Run status bar */
     .run-status {
-      margin-top: 10px;
-      font-size: 11.5px;
-      color: var(--sidebar-muted);
-      min-height: 16px;
-      line-height: 1.4;
+      margin-top: 9px;
+      font-size: 11px;
+      color: var(--sb-muted);
+      min-height: 14px;
+      letter-spacing: 0.01em;
     }
-    .run-status.ok    { color: #4ade80; }
-    .run-status.error { color: #f87171; }
-    .run-status.running { color: #60a5fa; }
+    .run-status.ok      { color: #7EC8A4; }
+    .run-status.error   { color: #E07070; }
+    .run-status.running { color: #D4956A; }
 
-    /* Sidebar nav */
-    .sidebar-nav {
+    /* ── Nav ──────────────────────────────────────────────────────────────── */
+    .nav {
       flex: 1;
       overflow-y: auto;
-      padding: 8px 0;
+      padding: 4px 0 8px;
     }
 
-    .sidebar-nav::-webkit-scrollbar { width: 4px; }
-    .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
-    .sidebar-nav::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+    .nav::-webkit-scrollbar { width: 3px; }
+    .nav::-webkit-scrollbar-track { background: transparent; }
+    .nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
 
-    .nav-section-label {
-      padding: 14px 16px 6px;
-      font-size: 10px;
+    .nav-label {
+      padding: 14px 20px 5px;
+      font-size: 9px;
       font-weight: 700;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--sidebar-muted);
+      color: var(--sb-muted);
     }
 
     .report-item {
       display: flex;
       flex-direction: column;
-      padding: 9px 16px 9px 14px;
+      padding: 9px 20px 9px 17px;
       cursor: pointer;
       border-left: 3px solid transparent;
-      transition: background 0.1s;
+      transition: background 0.1s, border-color 0.1s;
+      position: relative;
     }
-    .report-item:hover { background: var(--sidebar-hover); }
+
+    .report-item:hover { background: var(--sb-hover); }
+
     .report-item.active {
-      background: var(--sidebar-active-bg);
-      border-left-color: var(--sidebar-active-border);
+      background: var(--sb-active-bg);
+      border-left-color: var(--accent);
     }
 
     .report-item-date {
       font-size: 13px;
-      font-weight: 600;
-      color: var(--sidebar-text);
+      font-weight: 500;
+      color: var(--sb-text);
+      letter-spacing: 0.01em;
     }
-    .report-item.active .report-item-date { color: white; }
+
+    .report-item.active .report-item-date { color: #fff; }
 
     .report-item-meta {
       font-size: 11px;
-      color: var(--sidebar-muted);
-      margin-top: 2px;
+      color: var(--sb-muted);
+      margin-top: 1px;
     }
 
-    .report-item-badge {
+    .report-item-tag {
       display: inline-block;
-      margin-top: 4px;
-      padding: 1px 7px;
-      border-radius: 99px;
-      font-size: 10px;
-      font-weight: 600;
-      background: #1e3a5f;
-      color: #60a5fa;
+      margin-top: 5px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 1px 6px;
     }
 
-    .no-reports-msg {
-      padding: 20px 16px;
-      font-size: 12.5px;
-      color: var(--sidebar-muted);
-      line-height: 1.5;
+    /* Delete button */
+    .delete-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--sb-muted);
+      padding: 4px 5px;
+      font-size: 12px;
+      line-height: 1;
+      transition: opacity 0.15s, color 0.15s;
     }
 
-    /* Sidebar footer */
-    .sidebar-footer {
-      padding: 12px 16px;
-      border-top: 1px solid var(--sidebar-border);
-      font-size: 11px;
-      color: var(--sidebar-muted);
+    .report-item:hover .delete-btn { opacity: 1; }
+    .delete-btn:hover { color: #E07070; }
+
+    .no-reports {
+      padding: 18px 20px;
+      font-size: 12px;
+      color: var(--sb-muted);
+      line-height: 1.6;
+    }
+
+    /* ── Sidebar footer ───────────────────────────────────────────────────── */
+    .sb-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--sb-rule);
       flex-shrink: 0;
     }
 
-    /* ── Main content ───────────────────────────────────────────────────── */
+    .sb-footer-text {
+      font-size: 10.5px;
+      color: var(--sb-muted);
+      letter-spacing: 0.01em;
+    }
+
+    .sb-footer-link {
+      display: inline-block;
+      margin-top: 7px;
+      font-size: 10.5px;
+      color: var(--sb-muted);
+      cursor: pointer;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      background: none;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      padding: 0;
+      font-family: var(--font);
+    }
+
+    .sb-footer-link:hover {
+      color: #E07070;
+      border-bottom-color: #E07070;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════
+       MAIN AREA
+    ══════════════════════════════════════════════════════════════════════════ */
     .main {
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      background: var(--parchment);
       min-width: 0;
     }
 
-    .main-toolbar {
-      background: white;
-      border-bottom: 1px solid var(--border);
-      padding: 0 32px;
-      height: 52px;
+    /* ── Top bar ──────────────────────────────────────────────────────────── */
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--rule);
+      padding: 0 36px;
+      height: 48px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 10px;
       flex-shrink: 0;
     }
 
-    .report-title-bar {
-      font-size: 14px;
+    .topbar-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
       font-weight: 600;
-      color: var(--content-text);
-    }
-    .report-title-bar .report-title-muted {
-      color: var(--content-muted);
-      font-weight: 400;
-      margin-left: 8px;
     }
 
-    /* Reader area */
-    .reader {
+    .topbar-divider {
+      width: 1px;
+      height: 14px;
+      background: var(--rule);
+    }
+
+    .topbar-title {
+      font-size: 13px;
+      color: var(--ink-mid);
+      font-weight: 400;
+    }
+
+    /* ── Reader ───────────────────────────────────────────────────────────── */
+    .reader-wrap {
       flex: 1;
       overflow-y: auto;
-      padding: 40px 48px 60px;
-      max-width: 860px;
-      margin: 0 auto;
-      width: 100%;
+      background: var(--parchment);
     }
 
-    /* Empty / loading states */
-    .empty-state {
+    .reader-wrap::-webkit-scrollbar { width: 5px; }
+    .reader-wrap::-webkit-scrollbar-track { background: transparent; }
+    .reader-wrap::-webkit-scrollbar-thumb { background: var(--rule-strong); }
+
+    .reader {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 44px 48px 80px;
+    }
+
+    /* ── State views ──────────────────────────────────────────────────────── */
+    .state-view {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
-      color: var(--content-muted);
-      text-align: center;
-      gap: 12px;
+      min-height: calc(100vh - 48px);
       padding: 40px;
+      text-align: center;
+      gap: 14px;
     }
-    .empty-state-icon { font-size: 48px; opacity: 0.4; }
-    .empty-state-title { font-size: 18px; font-weight: 600; color: #334155; }
-    .empty-state-sub { font-size: 14px; max-width: 340px; line-height: 1.5; }
 
-    .loading-state {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      gap: 12px;
-      color: var(--content-muted);
+    .state-view-mark {
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      font-weight: 600;
     }
-    .loading-spinner {
-      width: 20px; height: 20px;
-      border: 3px solid #e2e8f0;
+
+    .state-view-heading {
+      font-size: 26px;
+      font-weight: 300;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      max-width: 380px;
+      line-height: 1.25;
+    }
+
+    .state-view-body {
+      font-size: 14px;
+      color: var(--ink-light);
+      max-width: 340px;
+      line-height: 1.6;
+    }
+
+    .state-view-body strong { color: var(--ink-mid); font-weight: 600; }
+
+    .loading-ring {
+      width: 28px; height: 28px;
+      border: 2px solid var(--parchment-2);
       border-top-color: var(--accent);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: spin 0.9s linear infinite;
     }
 
-    /* ── Report content styles ──────────────────────────────────────────── */
-    .report-content { line-height: 1.7; color: var(--content-text); }
+    /* ── Running overlay ──────────────────────────────────────────────────── */
+    .run-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 48px);
+      padding: 48px 32px;
+      text-align: center;
+      gap: 0;
+    }
 
-    .report-content h1 {
-      font-size: 28px;
-      font-weight: 800;
-      color: #0f172a;
-      margin-bottom: 6px;
+    .run-pulse-ring {
+      width: 48px; height: 48px;
+      border: 2px solid var(--parchment-2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 24px;
+    }
+
+    .run-overlay-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .run-overlay-title {
+      font-size: 24px;
+      font-weight: 300;
+      color: var(--ink);
       letter-spacing: -0.02em;
+      margin-bottom: 12px;
     }
 
+    .run-overlay-sub {
+      font-size: 13.5px;
+      color: var(--ink-light);
+      max-width: 340px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .run-timer {
+      font-size: 13px;
+      font-family: var(--mono);
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 20px;
+    }
+
+    .run-log {
+      width: 100%;
+      max-width: 520px;
+      background: var(--ink);
+      padding: 16px 20px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: rgba(232, 224, 213, 0.6);
+      max-height: 200px;
+      overflow-y: auto;
+      line-height: 1.7;
+      text-align: left;
+    }
+
+    .run-log::-webkit-scrollbar { width: 3px; }
+    .run-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
+
+    .log-line { display: block; }
+    .log-line.err { color: #E07070; }
+    .log-line.ok  { color: #7EC8A4; }
+
+    /* ══════════════════════════════════════════════════════════════════════════
+       REPORT CONTENT
+    ══════════════════════════════════════════════════════════════════════════ */
+    .report-content { color: var(--ink); line-height: 1.75; }
+
+    /* Report title */
+    .report-content h1 {
+      font-size: 32px;
+      font-weight: 200;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+      line-height: 1.15;
+      margin-bottom: 4px;
+    }
+
+    /* Section headers */
     .report-content h2 {
-      font-size: 18px;
+      font-size: 10px;
       font-weight: 700;
-      color: #1e293b;
-      margin: 36px 0 12px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid var(--border);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      margin: 44px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .report-content h2::before {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 2px;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* Article titles */
+    .report-content h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 36px 0 0;
+      line-height: 1.35;
       letter-spacing: -0.01em;
     }
 
-    .report-content h3 {
-      font-size: 16.5px;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 28px 0 10px;
-      line-height: 1.4;
-    }
-
     .report-content h3 a {
-      color: #1d4ed8;
+      color: inherit;
       text-decoration: none;
       border-bottom: 2px solid transparent;
       transition: border-color 0.15s, color 0.15s;
     }
+
     .report-content h3 a:hover {
       color: var(--accent);
       border-bottom-color: var(--accent);
     }
 
-    /* Metadata row that follows h3 */
-    .report-content h3 + p {
-      font-size: 12.5px;
-      color: var(--content-muted);
-      background: #f1f5f9;
-      border-radius: 6px;
-      padding: 8px 12px;
-      margin: 8px 0 14px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      align-items: center;
-      line-height: 1.8;
-    }
-
-    .report-content p { margin: 10px 0; font-size: 15px; }
-
-    .report-content ul {
-      margin: 10px 0 14px 0;
-      padding-left: 20px;
-    }
-    .report-content li {
-      font-size: 14.5px;
-      margin-bottom: 5px;
-      line-height: 1.6;
-    }
-
-    .report-content a {
-      color: #2563eb;
-      text-decoration: none;
-    }
-    .report-content a:hover {
-      text-decoration: underline;
-      color: var(--accent);
-    }
-
-    /* External link arrow */
+    /* ↗ arrow only on non-h3 links */
     .report-content a[target="_blank"]::after {
       content: " ↗";
-      font-size: 0.75em;
-      opacity: 0.6;
+      font-size: 0.72em;
+      opacity: 0.45;
     }
-    /* Don't put arrow on h3 title links */
-    .report-content h3 a::after { display: none; }
+    .report-content h3 a::after { display: none !important; }
 
+    /* Metadata row (h3 + p) — styled as a byline strip */
+    .report-content h3 + p {
+      font-size: 11.5px;
+      color: var(--ink-light);
+      background: var(--parchment-2);
+      border-left: 2px solid var(--rule-strong);
+      padding: 7px 12px;
+      margin: 8px 0 16px;
+      display: block;
+      line-height: 1.7;
+    }
+
+    /* Body paragraphs */
+    .report-content p {
+      margin: 12px 0;
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--ink-mid);
+    }
+
+    /* Lists */
+    .report-content ul {
+      margin: 12px 0 16px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .report-content li {
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--ink-mid);
+      padding: 4px 0 4px 20px;
+      position: relative;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .report-content li:last-child { border-bottom: none; }
+
+    .report-content li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 13px;
+      width: 8px;
+      height: 1.5px;
+      background: var(--accent);
+    }
+
+    /* Why it matters — styled as a pull quote */
+    .report-content p:has(strong:first-child) {
+      border-left: 2px solid var(--accent);
+      padding-left: 14px;
+      margin-left: 0;
+      font-style: italic;
+      color: var(--ink-mid);
+    }
+
+    /* Links */
+    .report-content a {
+      color: var(--accent-dark);
+      text-decoration: none;
+      border-bottom: 1px solid var(--accent-light);
+      transition: border-color 0.15s;
+    }
+    .report-content a:hover {
+      border-bottom-color: var(--accent);
+    }
+
+    /* Horizontal rules */
     .report-content hr {
       border: none;
-      border-top: 1px solid var(--border);
-      margin: 28px 0;
+      border-top: 1px solid var(--rule);
+      margin: 32px 0;
     }
 
-    .report-content strong { font-weight: 700; color: #0f172a; }
+    /* Strong */
+    .report-content strong {
+      font-weight: 600;
+      color: var(--ink);
+    }
 
-    /* Inline code → label badges */
+    /* Inline code — label badges */
     .report-content code {
-      font-family: var(--font-mono);
-      font-size: 11.5px;
+      font-family: var(--mono);
+      font-size: 10.5px;
       font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
       padding: 2px 7px;
-      border-radius: 99px;
-      background: #f1f5f9;
-      color: #475569;
-      border: 1px solid var(--border);
-      letter-spacing: 0.04em;
+      border: 1px solid var(--rule-strong);
+      color: var(--ink-mid);
+      background: transparent;
     }
 
-    /* Label-specific badge colors (applied via JS) */
     .report-content code.badge-critical {
-      background: var(--badge-critical-bg);
-      color: var(--badge-critical-text);
-      border-color: var(--badge-critical-border);
+      border-color: var(--accent);
+      color: var(--accent);
     }
     .report-content code.badge-high {
-      background: var(--badge-high-bg);
-      color: var(--badge-high-text);
-      border-color: var(--badge-high-border);
+      border-color: var(--ink-mid);
+      color: var(--ink-mid);
     }
     .report-content code.badge-medium {
-      background: var(--badge-medium-bg);
-      color: var(--badge-medium-text);
-      border-color: var(--badge-medium-border);
+      border-color: var(--ink-faint);
+      color: var(--ink-light);
     }
     .report-content code.badge-low {
-      background: var(--badge-low-bg);
-      color: var(--badge-low-text);
-      border-color: var(--badge-low-border);
+      border-color: var(--rule-strong);
+      color: var(--ink-faint);
     }
 
-    /* Tables (source health) */
+    /* Tables */
     .report-content table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13.5px;
-      margin: 12px 0;
+      font-size: 13px;
+      margin: 14px 0;
     }
+
     .report-content th {
-      background: #f1f5f9;
+      background: var(--parchment-2);
       padding: 8px 12px;
       text-align: left;
-      font-weight: 600;
-      color: #475569;
-      border: 1px solid var(--border);
-      font-size: 12px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      color: var(--ink-light);
+      border: 1px solid var(--rule);
     }
+
     .report-content td {
       padding: 8px 12px;
-      border: 1px solid var(--border);
-      color: #334155;
+      border: 1px solid var(--rule);
+      color: var(--ink-mid);
       vertical-align: top;
     }
-    .report-content tr:nth-child(even) td { background: #f8fafc; }
 
-    /* Run log panel */
-    .run-log {
-      background: #0f172a;
-      border-radius: 8px;
-      padding: 16px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: #94a3b8;
-      max-height: 280px;
-      overflow-y: auto;
-      line-height: 1.6;
-      margin-top: 16px;
-    }
-    .run-log-line { display: block; }
-    .run-log-line.err { color: #f87171; }
-    .run-log-line.ok  { color: #4ade80; }
+    .report-content tr:nth-child(even) td { background: var(--parchment); }
 
-    /* Running overlay */
-    .running-overlay {
+    /* Run failed view */
+    .fail-view {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
-      gap: 20px;
-      text-align: center;
+      min-height: calc(100vh - 48px);
       padding: 40px;
+      text-align: center;
+      gap: 12px;
     }
-    .running-pulse {
-      width: 56px; height: 56px;
-      border: 4px solid #e2e8f0;
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+
+    .fail-mark {
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #E07070;
+      font-weight: 700;
     }
-    .running-title { font-size: 20px; font-weight: 700; color: #1e293b; }
-    .running-sub   { font-size: 14px; color: var(--content-muted); max-width: 320px; line-height: 1.5; }
-    .running-timer { font-size: 13px; font-family: var(--font-mono); color: var(--accent); }
+
+    .fail-title {
+      font-size: 22px;
+      font-weight: 300;
+      color: var(--ink);
+    }
   </style>
 </head>
 <body>
 
-<div class="layout">
+<div class="shell">
 
-  <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+  <!-- ══════════════════════════════════
+       SIDEBAR
+  ══════════════════════════════════ -->
   <aside class="sidebar">
 
-    <div class="sidebar-header">
-      <div class="app-logo">
-        <div class="app-logo-icon">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
-          </svg>
-        </div>
-        <div class="app-logo-text">
-          <span class="app-name">AI News Monitor</span>
-          <span class="app-sub">JP's Review</span>
-        </div>
-      </div>
+    <div class="masthead">
+      <div class="masthead-eyebrow">AI Intelligence</div>
+      <div class="masthead-title">The <span>Brief</span></div>
+    </div>
 
+    <div class="run-section">
       <button class="run-btn" id="runBtn" onclick="startRun()">
-        <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="white">
+        <svg class="btn-icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
           <path d="M8 5v14l11-7z"/>
         </svg>
         <div class="spinner"></div>
         <span class="btn-label">Run Now</span>
       </button>
-
       <div class="run-status" id="runStatus">Ready</div>
     </div>
 
-    <nav class="sidebar-nav" id="sidebarNav">
-      <div class="no-reports-msg">Loading reports…</div>
+    <nav class="nav" id="sidebarNav">
+      <div class="no-reports">No reports yet.</div>
     </nav>
 
-    <div class="sidebar-footer" id="sidebarFooter">
-      9 sources configured
+    <div class="sb-footer">
+      <div class="sb-footer-text">9 sources configured</div>
+      <button class="sb-footer-link" onclick="clearAllHistory()">
+        Clear all history
+      </button>
     </div>
 
   </aside>
 
-  <!-- ── Main ─────────────────────────────────────────────────────────── -->
+  <!-- ══════════════════════════════════
+       MAIN
+  ══════════════════════════════════ -->
   <main class="main">
 
-    <div class="main-toolbar">
-      <span class="report-title-bar" id="toolbarTitle">
-        AI News Monitor
-        <span class="report-title-muted">Select a report</span>
-      </span>
+    <div class="topbar">
+      <span class="topbar-label">The Brief</span>
+      <div class="topbar-divider"></div>
+      <span class="topbar-title" id="topbarTitle">Select a report</span>
     </div>
 
-    <div class="reader" id="reader">
-      <div class="empty-state" id="emptyState">
-        <div class="empty-state-icon">📰</div>
-        <div class="empty-state-title">No report selected</div>
-        <div class="empty-state-sub">
-          Click <strong>Run Now</strong> to fetch the latest AI news,
-          or select a past report from the sidebar.
+    <div class="reader-wrap" id="readerWrap">
+      <div class="reader" id="reader">
+        <div class="state-view">
+          <div class="state-view-mark">AI News Monitor</div>
+          <div class="state-view-heading">Nothing selected yet</div>
+          <div class="state-view-body">
+            Click <strong>Run Now</strong> to fetch the latest AI developments,
+            or select a past report from the sidebar.
+          </div>
         </div>
       </div>
     </div>
@@ -539,109 +764,91 @@
 
 <script>
 // ── State ────────────────────────────────────────────────────────────────────
-
-let allReports = [];
+let allReports    = [];
 let activeFilename = null;
-let pollInterval = null;
+let pollInterval  = null;
 let runTimerInterval = null;
-let runStartTime = null;
-let isRunning = false;
+let runStartTime  = null;
+let isRunning     = false;
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
-
 async function boot() {
   await loadReports();
   checkInitialRunState();
 }
 
 async function checkInitialRunState() {
-  // In case the server was already running a job (e.g. page refresh mid-run)
   try {
-    const res = await fetch('/api/run/status');
+    const res  = await fetch('/api/run/status');
     const data = await res.json();
     if (data.running) {
       runStartTime = data.started_at ? new Date(data.started_at) : new Date();
       setRunning(true);
+      showRunningOverlay();
       startPolling();
     }
   } catch (e) { /* ignore */ }
 }
 
 // ── Reports ──────────────────────────────────────────────────────────────────
-
 async function loadReports() {
   try {
-    const res = await fetch('/api/reports');
+    const res  = await fetch('/api/reports');
     const data = await res.json();
     allReports = data.reports || [];
     renderSidebar();
-
-    // Auto-load most recent report if nothing is selected
     if (!activeFilename && allReports.length > 0) {
       loadReport(allReports[0].filename);
     } else if (allReports.length === 0) {
       showEmpty();
     }
-  } catch (e) {
-    console.error('Failed to load reports:', e);
-  }
+  } catch (e) { console.error('Failed to load reports:', e); }
 }
 
 function renderSidebar() {
   const nav = document.getElementById('sidebarNav');
-
   if (allReports.length === 0) {
-    nav.innerHTML = `<div class="no-reports-msg">
-      No reports yet.<br>Click <strong style="color:#e2e8f0">Run Now</strong> to get started.
+    nav.innerHTML = `<div class="no-reports">
+      No reports yet.<br>Click <strong style="color:var(--sb-text)">Run Now</strong> to begin.
     </div>`;
     return;
   }
-
   const current = allReports[0];
-  const past = allReports.slice(1);
-
+  const past    = allReports.slice(1);
   let html = '';
-
-  // Current Updates
-  html += `<div class="nav-section-label">Current Updates</div>`;
+  html += `<div class="nav-label">Current</div>`;
   html += reportItemHTML(current, true);
-
-  // Past Reviews
   if (past.length > 0) {
-    html += `<div class="nav-section-label" style="margin-top:8px">Past Reviews</div>`;
+    html += `<div class="nav-label" style="margin-top:10px">Past Reviews</div>`;
     past.forEach(r => { html += reportItemHTML(r, false); });
   }
-
   nav.innerHTML = html;
-
-  // Re-mark active
-  if (activeFilename) {
-    markActive(activeFilename);
-  }
+  if (activeFilename) markActive(activeFilename);
 }
 
 function reportItemHTML(report, isCurrent) {
-  const count = report.item_count;
+  const count    = report.item_count;
   const countStr = count > 0 ? `${count} item${count !== 1 ? 's' : ''}` : 'no items';
-  const badge = isCurrent ? `<span class="report-item-badge">Latest</span>` : '';
-
+  const tag      = isCurrent ? `<span class="report-item-tag">Latest</span>` : '';
+  const safe     = report.filename.replace(/'/g, "\\'");
   return `
     <div class="report-item" id="item-${report.filename.replace('.', '-')}"
-         onclick="loadReport('${report.filename}')">
+         onclick="loadReport('${safe}')">
       <span class="report-item-date">${report.display_date}</span>
       <span class="report-item-meta">${countStr}</span>
-      ${badge}
+      ${tag}
+      <button class="delete-btn" title="Delete this run"
+              onclick="event.stopPropagation(); deleteReport('${safe}')">&#x1F5D1;</button>
     </div>`;
 }
 
 async function loadReport(filename) {
   activeFilename = filename;
   markActive(filename);
-  updateToolbar(filename);
+  updateTopbar(filename);
   showLoading();
-
   try {
-    const res = await fetch(`/api/reports/${encodeURIComponent(filename)}`);
+    const res  = await fetch(`/api/reports/${encodeURIComponent(filename)}`);
     const data = await res.json();
     renderReport(data);
   } catch (e) {
@@ -650,75 +857,57 @@ async function loadReport(filename) {
 }
 
 function renderReport(data) {
-  const reader = document.getElementById('reader');
-  reader.innerHTML = `<div class="report-content" id="reportContent">${data.html}</div>`;
+  document.getElementById('reader').innerHTML =
+    `<div class="report-content" id="reportContent">${data.html}</div>`;
   postProcessReport();
-  reader.scrollTop = 0;
+  document.getElementById('readerWrap').scrollTop = 0;
 }
 
 function postProcessReport() {
-  const content = document.getElementById('reportContent');
-  if (!content) return;
-
-  // Color-code label badges: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`
-  content.querySelectorAll('code').forEach(el => {
-    const t = el.textContent.trim().toLowerCase();
-    if (['critical', 'high', 'medium', 'low'].includes(t)) {
-      el.classList.add(`badge-${t}`);
+  const el = document.getElementById('reportContent');
+  if (!el) return;
+  el.querySelectorAll('code').forEach(c => {
+    const t = c.textContent.trim().toLowerCase();
+    if (['critical','high','medium','low'].includes(t)) {
+      c.classList.add(`badge-${t}`);
     }
   });
 }
 
-// ── Toolbar ───────────────────────────────────────────────────────────────────
-
-function updateToolbar(filename) {
-  const report = allReports.find(r => r.filename === filename);
-  const title = document.getElementById('toolbarTitle');
-  if (report) {
-    title.innerHTML = `AI News Summary
-      <span class="report-title-muted">— ${report.display_date}
-        ${report.item_count > 0 ? '· ' + report.item_count + ' items' : ''}
-      </span>`;
+// ── Topbar ────────────────────────────────────────────────────────────────────
+function updateTopbar(filename) {
+  const r   = allReports.find(r => r.filename === filename);
+  const el  = document.getElementById('topbarTitle');
+  if (r) {
+    el.textContent = r.display_date +
+      (r.item_count > 0 ? ` — ${r.item_count} items` : '');
   }
 }
 
-// ── Active state ─────────────────────────────────────────────────────────────
-
+// ── Active ────────────────────────────────────────────────────────────────────
 function markActive(filename) {
-  document.querySelectorAll('.report-item').forEach(el => {
-    el.classList.remove('active');
-  });
+  document.querySelectorAll('.report-item').forEach(el => el.classList.remove('active'));
   const id = `item-${filename.replace('.', '-')}`;
   const el = document.getElementById(id);
   if (el) el.classList.add('active');
 }
 
-// ── Run pipeline ─────────────────────────────────────────────────────────────
-
+// ── Run pipeline ──────────────────────────────────────────────────────────────
 async function startRun() {
   if (isRunning) return;
-
   try {
-    const res = await fetch('/api/run', {
+    const res  = await fetch('/api/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
     });
     const data = await res.json();
-
-    if (data.error) {
-      setStatus(data.error, 'error');
-      return;
-    }
-
+    if (data.error) { setStatus(data.error, 'error'); return; }
     runStartTime = new Date();
     setRunning(true);
     showRunningOverlay();
     startPolling();
-
-  } catch (e) {
-    setStatus('Could not connect to server.', 'error');
-  }
+  } catch (e) { setStatus('Could not connect to server.', 'error'); }
 }
 
 function startPolling() {
@@ -728,103 +917,141 @@ function startPolling() {
 
 async function pollRunStatus() {
   try {
-    const res = await fetch('/api/run/status');
+    const res  = await fetch('/api/run/status');
     const data = await res.json();
-
-    updateRunningOverlayLog(data.output || []);
-
+    updateRunningLog(data.output || []);
     if (!data.running) {
       clearInterval(pollInterval);
       pollInterval = null;
       onRunComplete(data);
     }
-  } catch (e) { /* ignore transient errors */ }
+  } catch (e) { /* ignore */ }
 }
 
 function onRunComplete(data) {
   setRunning(false);
   const ok = data.exit_code === 0;
   setStatus(
-    ok ? `Completed · ${formatTime(new Date(data.finished_at))}` : `Failed (exit ${data.exit_code})`,
+    ok ? `Completed \u00b7 ${formatTime(new Date(data.finished_at))}` : `Failed (exit ${data.exit_code})`,
     ok ? 'ok' : 'error'
   );
-
-  // Reload report list and auto-load new report
   loadReports().then(() => {
-    if (allReports.length > 0 && ok) {
-      loadReport(allReports[0].filename);
-    } else if (!ok) {
-      showRunFailedView(data);
-    }
+    if (allReports.length > 0 && ok) loadReport(allReports[0].filename);
+    else if (!ok) showRunFailed(data);
   });
 }
 
 // ── Running overlay ───────────────────────────────────────────────────────────
-
 function showRunningOverlay() {
-  const reader = document.getElementById('reader');
-  reader.innerHTML = `
-    <div class="running-overlay">
-      <div class="running-pulse"></div>
-      <div class="running-title">Fetching AI News…</div>
-      <div class="running-sub">
-        Checking all sources, deduplicating, ranking, and building your report.
-        This usually takes 30–90 seconds.
+  document.getElementById('reader').innerHTML = `
+    <div class="run-overlay">
+      <div class="run-pulse-ring"></div>
+      <div class="run-overlay-eyebrow">Fetching</div>
+      <div class="run-overlay-title">Collecting AI news</div>
+      <div class="run-overlay-sub">
+        Checking all sources, deduplicating, ranking,
+        and building your report.
       </div>
-      <div class="running-timer" id="runTimer">0:00</div>
+      <div class="run-timer" id="runTimer">0:00</div>
       <div class="run-log" id="runLog"></div>
     </div>`;
 
-  // Start elapsed timer
   if (runTimerInterval) clearInterval(runTimerInterval);
   runTimerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - runStartTime) / 1000);
-    const m = Math.floor(elapsed / 60);
-    const s = elapsed % 60;
+    const s = Math.floor((Date.now() - runStartTime) / 1000);
     const el = document.getElementById('runTimer');
-    if (el) el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+    if (el) el.textContent = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
   }, 1000);
 }
 
-function updateRunningOverlayLog(lines) {
-  const logEl = document.getElementById('runLog');
-  if (!logEl || !lines.length) return;
-  logEl.innerHTML = lines.slice(-30).map(line => {
-    const cls = line.includes('ERROR') || line.includes('FAILED') ? 'err'
-               : line.includes('complete') || line.includes('success') ? 'ok'
-               : '';
-    return `<span class="run-log-line ${cls}">${escapeHTML(line)}</span>`;
+function updateRunningLog(lines) {
+  const el = document.getElementById('runLog');
+  if (!el || !lines.length) return;
+  el.innerHTML = lines.slice(-30).map(line => {
+    const c = line.includes('ERROR')||line.includes('FAILED') ? 'err'
+            : line.includes('complete')||line.includes('success') ? 'ok' : '';
+    return `<span class="log-line ${c}">${esc(line)}</span>`;
   }).join('\n');
-  logEl.scrollTop = logEl.scrollHeight;
+  el.scrollTop = el.scrollHeight;
 }
 
-function showRunFailedView(data) {
+function showRunFailed(data) {
   clearInterval(runTimerInterval);
   runTimerInterval = null;
-  const lines = (data.output || []).slice(-50);
-  const reader = document.getElementById('reader');
-  reader.innerHTML = `
-    <div class="running-overlay">
-      <div class="empty-state-icon" style="font-size:40px">⚠️</div>
-      <div class="running-title" style="color:#dc2626">Run Failed</div>
-      <div class="running-sub">Exit code ${data.exit_code}. Check the log below for details.</div>
-      <div class="run-log" style="width:100%;max-width:600px">${
-        lines.map(l => `<span class="run-log-line ${l.includes('ERROR') ? 'err' : ''}">${escapeHTML(l)}</span>`).join('\n')
+  const lines = (data.output || []).slice(-40);
+  document.getElementById('reader').innerHTML = `
+    <div class="fail-view">
+      <div class="fail-mark">Run failed</div>
+      <div class="fail-title">Exit code ${data.exit_code}</div>
+      <div class="run-log" style="width:100%;max-width:560px;margin-top:8px">${
+        lines.map(l=>`<span class="log-line ${l.includes('ERROR')?'err':''}">${esc(l)}</span>`).join('\n')
       }</div>
     </div>`;
 }
 
-// ── UI helpers ────────────────────────────────────────────────────────────────
+// ── Delete ────────────────────────────────────────────────────────────────────
+async function deleteReport(filename) {
+  if (!confirm(
+    `Delete the report for ${filename.slice(0,10)}?\n\n` +
+    `Its run history will be cleared so those articles can surface again.`
+  )) return;
+  try {
+    const res  = await fetch(`/api/reports/${encodeURIComponent(filename)}`, { method:'DELETE' });
+    const data = await res.json();
+    if (data.error) { alert(`Delete failed: ${data.error}`); return; }
+    if (activeFilename === filename) {
+      activeFilename = null;
+      document.getElementById('reader').innerHTML = `
+        <div class="state-view">
+          <div class="state-view-mark">Deleted</div>
+          <div class="state-view-heading">Report removed</div>
+          <div class="state-view-body">
+            ${data.articles_removed} article${data.articles_removed!==1?'s':''} cleared from history.
+            Click <strong>Run Now</strong> to fetch them again.
+          </div>
+        </div>`;
+      document.getElementById('topbarTitle').textContent = 'Select a report';
+    }
+    await loadReports();
+  } catch (e) { alert('Could not connect to server.'); }
+}
 
+// ── Clear history ─────────────────────────────────────────────────────────────
+async function clearAllHistory() {
+  if (!confirm(
+    'Clear all run history?\n\n' +
+    'This resets to a first-run state — next run looks back 14 days. ' +
+    'Your report files are kept.\n\nThis cannot be undone.'
+  )) return;
+  try {
+    const res  = await fetch('/api/history/clear', { method:'POST' });
+    const data = await res.json();
+    if (data.error) { alert('Failed: ' + data.error); return; }
+    activeFilename = null;
+    document.getElementById('reader').innerHTML = `
+      <div class="state-view">
+        <div class="state-view-mark">Reset</div>
+        <div class="state-view-heading">History cleared</div>
+        <div class="state-view-body">
+          All run history has been reset.
+          Click <strong>Run Now</strong> to fetch the last 14 days.
+        </div>
+      </div>`;
+    document.getElementById('topbarTitle').textContent = 'Ready to run';
+    await loadReports();
+  } catch (e) { alert('Could not connect to server.'); }
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
 function setRunning(running) {
   isRunning = running;
-  const btn = document.getElementById('runBtn');
+  const btn   = document.getElementById('runBtn');
   const label = btn.querySelector('.btn-label');
   if (running) {
     btn.disabled = true;
     btn.classList.add('running');
-    label.textContent = 'Running…';
-    setStatus('Fetching news…', 'running');
+    label.textContent = 'Running\u2026';
+    setStatus('Fetching news\u2026', 'running');
   } else {
     btn.disabled = false;
     btn.classList.remove('running');
@@ -833,50 +1060,47 @@ function setRunning(running) {
   }
 }
 
-function setStatus(msg, type = '') {
+function setStatus(msg, type='') {
   const el = document.getElementById('runStatus');
   el.textContent = msg;
   el.className = `run-status ${type}`;
 }
 
 function showEmpty() {
-  const reader = document.getElementById('reader');
-  reader.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-state-icon">📰</div>
-      <div class="empty-state-title">No reports yet</div>
-      <div class="empty-state-sub">
-        Click <strong>Run Now</strong> to fetch the latest AI news across
-        OpenAI, Anthropic, DeepMind, Hugging Face, TechCrunch, and more.
+  document.getElementById('reader').innerHTML = `
+    <div class="state-view">
+      <div class="state-view-mark">AI News Monitor</div>
+      <div class="state-view-heading">No reports yet</div>
+      <div class="state-view-body">
+        Click <strong>Run Now</strong> to fetch the latest AI developments
+        across OpenAI, Anthropic, DeepMind, Hugging Face, and more.
       </div>
     </div>`;
 }
 
 function showLoading() {
-  const reader = document.getElementById('reader');
-  reader.innerHTML = `
-    <div class="loading-state">
-      <div class="loading-spinner"></div>
-      <span style="color:#64748b;font-size:14px">Loading report…</span>
+  document.getElementById('reader').innerHTML = `
+    <div class="state-view">
+      <div class="loading-ring"></div>
+      <div class="state-view-body">Loading\u2026</div>
     </div>`;
 }
 
 function showError(msg) {
-  const reader = document.getElementById('reader');
-  reader.innerHTML = `<div class="empty-state">
-    <div class="empty-state-icon">⚠️</div>
-    <div class="empty-state-title">Error</div>
-    <div class="empty-state-sub">${escapeHTML(msg)}</div>
-  </div>`;
+  document.getElementById('reader').innerHTML = `
+    <div class="state-view">
+      <div class="state-view-mark">Error</div>
+      <div class="state-view-heading">${esc(msg)}</div>
+    </div>`;
 }
 
-function formatTime(date) {
-  if (!date || isNaN(date)) return '';
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function formatTime(d) {
+  if (!d || isNaN(d)) return '';
+  return d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
 }
 
-function escapeHTML(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ── Start ─────────────────────────────────────────────────────────────────────

@@ -153,12 +153,19 @@ def finish_run(run_id: str, meta: RunMetadata, path: Path = STATE_DB) -> None:
 
 
 def get_last_successful_run(path: Path = STATE_DB) -> Optional[datetime]:
-    """Return the finished_at datetime of the most recent successful run."""
+    """
+    Return the finished_at datetime of the most recent successful run
+    that actually selected articles (articles_selected > 0).
+
+    Runs that completed but found nothing are intentionally excluded —
+    they should not advance the window start, otherwise the next run
+    would look at an empty window and also find nothing.
+    """
     try:
         with _db(path) as conn:
             row = conn.execute(
                 """SELECT finished_at FROM runs
-                   WHERE status='success'
+                   WHERE status='success' AND articles_selected > 0
                    ORDER BY finished_at DESC LIMIT 1"""
             ).fetchone()
             if row and row["finished_at"]:
@@ -320,6 +327,74 @@ def clear_seen_state(path: Path = STATE_DB) -> None:
     with _db(path) as conn:
         conn.execute("DELETE FROM seen_articles")
         conn.execute("DELETE FROM event_clusters")
+
+
+def delete_run(report_path: str, path: Path = STATE_DB) -> dict:
+    """
+    Delete a run and all seen_articles recorded during it, identified by
+    the report file path stored in the runs table.
+
+    Always cleans up orphaned seen_articles (rows whose run_id no longer
+    exists in the runs table) even if the path lookup fails — this covers
+    path-format mismatches on Windows and any other edge cases.
+
+    Returns a dict with keys:
+      run_id           - the deleted run_id (or None if not found by path)
+      articles_removed - number of seen_article rows deleted
+      found            - True if a matching run record was found
+    """
+    with _db(path) as conn:
+        # Find the run by report_path — try exact match first, then basename
+        basename = Path(report_path).name
+        row = conn.execute(
+            """SELECT run_id FROM runs
+               WHERE report_path = ?
+                  OR report_path LIKE ?
+                  OR report_path LIKE ?""",
+            (report_path, f"%{basename}", f"%/{basename}"),
+        ).fetchone()
+
+        run_id = None
+        articles_removed = 0
+
+        if row:
+            run_id = row["run_id"]
+            # Delete seen_articles belonging to this run
+            cur = conn.execute(
+                "DELETE FROM seen_articles WHERE first_seen_run = ?",
+                (run_id,),
+            )
+            articles_removed += cur.rowcount
+            # Delete the run record
+            conn.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
+
+        # Always sweep for orphaned seen_articles whose run no longer exists.
+        # This catches rows left behind by path-lookup failures or prior bugs.
+        cur2 = conn.execute(
+            """DELETE FROM seen_articles
+               WHERE first_seen_run NOT IN (
+                   SELECT run_id FROM runs
+               )"""
+        )
+        articles_removed += cur2.rowcount
+
+    return {
+        "found": row is not None,
+        "run_id": run_id,
+        "articles_removed": articles_removed,
+    }
+
+
+def list_runs(path: Path = STATE_DB) -> list[dict]:
+    """Return all run records ordered newest first."""
+    try:
+        with _db(path) as conn:
+            rows = conn.execute(
+                "SELECT * FROM runs ORDER BY started_at DESC"
+            ).fetchall()
+            return [dict(r) for r in rows]
+    except Exception:
+        return []
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
