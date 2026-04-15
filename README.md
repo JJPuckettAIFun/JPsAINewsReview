@@ -6,6 +6,54 @@ A local Python CLI tool that monitors trusted AI news sources and reports only n
 
 ## Changelog
 
+### v1.3.0 — 2026-04-15
+
+**Manage Sources UI**
+- Added a full **Source Manager** panel accessible directly from the sidebar, just below the Run Now button.
+- Displays all configured sources in a table showing name, type, trust weight, live status (OK / failed), article count from the last run, and a toggle to enable/disable each source.
+- Sources that failed their last fetch are highlighted in red with the exact error message, failure count, and last successful fetch date — no more guessing why a source went silent.
+- A red banner appears at the top of the panel when any source is currently failing.
+- **Add Source:** click "Add Source" to open a modal and fill in name, feed URL, homepage URL, source type, trust weight, and whether a browser user-agent is required. The new source is written directly to `config/sources.yaml` and takes effect on the next run.
+- **Delete Source:** each row has a delete button (pinned top-right) to permanently remove a source from `sources.yaml`.
+- **Toggle Source:** enable or disable any source with a single click without deleting it.
+
+**Rich Article Summaries**
+- The pipeline now fetches the full HTML of each new article in parallel (8 threads) after deduplication.
+- A new `content_extractor.py` module strips navigation, headers, footers, and ads using CSS selector priority matching, returning up to 5,000 characters of clean article body text.
+- The summarizer uses this full text — when available — to build richer, multi-paragraph summaries with more specific bullet points instead of the short RSS-snippet fallback.
+- Falls back gracefully to the RSS description when full-page fetch fails or is blocked.
+
+**Collapsible Report Sections**
+- Article entries in the report viewer are now collapsible — click any article header to expand or collapse it. Articles start expanded.
+- The **Run Metadata** section is collapsible and starts collapsed to keep the top of the report clean.
+
+**Run Overlay — "Did You Know?" Tips**
+- The run-in-progress overlay now shows a **"Did You Know?"** tip box pinned at the top of the overlay, cycling through facts about how the pipeline works while you wait.
+- The overlay also shows the current source count and an estimated time range so the wait feels less like a black box.
+- On failure, the overlay stays visible (no longer auto-dismisses), shows the full log output from `data/last_run.log`, and offers **Back to Reports** and **Try Again** buttons.
+
+**Persistent Error Logging**
+- Every run now writes a full log to `data/last_run.log` (UTF-8, overwritten each run).
+- The web UI fetches this log on failure so you can read the exact error without needing a terminal open.
+
+**UI Redesign**
+- Color scheme updated to blues, greens, and greys: sidebar background `#1C3250`, accent `#2A9C72`, link color `#2F7EC0`, content background `#F2F6FA`.
+- Masthead is larger and more prominent (22px, bold, accent-colored bottom border).
+- Article report area expanded to 1080px max-width to make better use of wide screens.
+- Sources checked in Run Metadata now lists source names, not just a count.
+
+**Feed Fixes**
+- Fixed The Rundown AI feed URL (switched to beehiiv CDN: `rss.beehiiv.com/feeds/2R3C6Bt5wj.xml`).
+- Fixed TLDR AI feed URL (`tldr.tech/api/rss/ai`).
+- Disabled Meta AI Blog (no public RSS feed exists).
+- Added XML sanitizer in `fetchers.py` to handle malformed RSS feeds with illegal control characters or bare ampersands — falls back to raw-fetch + sanitize + re-parse when feedparser enters bozo mode.
+- `RSSFetcher` now always sends a browser User-Agent to avoid 403s on UA-sensitive feeds.
+
+**Bug Fixes**
+- Fixed recurring `UnicodeEncodeError` crash on Windows (cp1252 terminals) — all terminal output now goes through `_safe_print()` which replaces unencodable characters rather than crashing.
+
+---
+
 ### v1.2.0 — 2026-04-14
 **Delete Run**
 - Added a trash icon button to each report in the sidebar of the web UI.
@@ -46,6 +94,7 @@ news_monitor/
   ranker.py                  Scoring model (0-100) + labels
   classifier.py              Keyword-based category + topic matching
   summarizer.py              Extractive summary, bullets, why-it-matters
+  content_extractor.py       Full-page HTML article text extraction
   storage.py                 SQLite state persistence
   reporter.py                Markdown + JSON report generation
   models.py                  Dataclasses: RawArticle, Article, EventCluster, etc.
@@ -57,6 +106,7 @@ config/
 
 data/
   app_state.db               SQLite state database
+  last_run.log               Full log of the most recent run (UTF-8, overwritten each run)
 
 reports/
   YYYY-MM-DD-ai-news-summary.md
