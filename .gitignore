@@ -1,6 +1,8 @@
 # ── Generated output ─────────────────────────────────────────────────────────
-data/
-reports/
+data/*
+!data/.gitkeep
+reports/*
+!reports/.gitkeep
 
 # ── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
