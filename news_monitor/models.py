@@ -118,6 +118,7 @@ class RunMetadata:
     candidates_found: int = 0
     articles_selected: int = 0
     report_path: Optional[str] = None
+    checked_source_names: list = field(default_factory=list)  # display names of checked sources
 
 
 # ─── Report output ───────────────────────────────────────────────────────────

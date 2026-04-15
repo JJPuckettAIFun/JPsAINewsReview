@@ -10,31 +10,34 @@
 
     /* ── Design tokens ─────────────────────────────────────────────────────── */
     :root {
-      /* Palette: warm charcoal + parchment + terracotta */
-      --ink:          #1A1715;
-      --ink-mid:      #4A4440;
-      --ink-light:    #8A827A;
-      --ink-faint:    #B8B0A8;
+      /* Palette: deep navy + light grey + teal-green + blue */
+      --ink:          #1A2433;
+      --ink-mid:      #3C5068;
+      --ink-light:    #6B87A0;
+      --ink-faint:    #A0B8CC;
 
-      --parchment:    #F8F5EE;
-      --parchment-2:  #F0EBE1;
+      --parchment:    #F2F6FA;
+      --parchment-2:  #E6EDF4;
       --white:        #FFFFFF;
 
-      --accent:       #C4541A;   /* terracotta — the ONLY color */
-      --accent-dark:  #A0431A;
-      --accent-wash:  rgba(196, 84, 26, 0.08);
-      --accent-light: #F5E8DF;
+      --accent:       #2A9C72;   /* teal-green — primary action / highlight */
+      --accent-dark:  #1E7D5A;
+      --accent-wash:  rgba(42, 156, 114, 0.08);
+      --accent-light: #D0EDE4;
 
-      --rule:         rgba(26, 23, 21, 0.12);
-      --rule-strong:  rgba(26, 23, 21, 0.25);
+      --link:         #2F7EC0;   /* blue for body links */
+      --link-light:   #DAEAF6;
+
+      --rule:         rgba(26, 36, 51, 0.10);
+      --rule-strong:  rgba(26, 36, 51, 0.22);
 
       /* Sidebar */
-      --sb-bg:        #1A1715;
-      --sb-rule:      rgba(255, 255, 255, 0.07);
-      --sb-text:      #E0D8CE;
-      --sb-muted:     #6E6560;
-      --sb-hover:     rgba(255, 255, 255, 0.04);
-      --sb-active-bg: rgba(196, 84, 26, 0.14);
+      --sb-bg:        #1C3250;   /* deep navy */
+      --sb-rule:      rgba(255, 255, 255, 0.09);
+      --sb-text:      #CFE0EF;   /* bright, clearly readable */
+      --sb-muted:     #7899B4;   /* visible muted — not too dark */
+      --sb-hover:     rgba(255, 255, 255, 0.07);
+      --sb-active-bg: rgba(42, 156, 114, 0.20);
 
       --sidebar-w:    268px;
 
@@ -65,24 +68,27 @@
 
     /* ── Masthead ─────────────────────────────────────────────────────────── */
     .masthead {
-      padding: 22px 20px 18px;
-      border-bottom: 1px solid var(--sb-rule);
+      padding: 24px 20px 20px;
+      border-bottom: 2px solid var(--accent);
       flex-shrink: 0;
+      background: rgba(0,0,0,0.18);
     }
 
     .masthead-eyebrow {
-      font-size: 9px;
-      letter-spacing: 0.18em;
+      font-size: 9.5px;
+      letter-spacing: 0.20em;
       text-transform: uppercase;
-      color: var(--sb-muted);
-      margin-bottom: 3px;
+      color: var(--sb-text);
+      opacity: 0.7;
+      margin-bottom: 5px;
     }
 
     .masthead-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--sb-text);
-      letter-spacing: 0.01em;
+      font-size: 22px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
     }
 
     .masthead-title span {
@@ -149,9 +155,9 @@
       min-height: 14px;
       letter-spacing: 0.01em;
     }
-    .run-status.ok      { color: #7EC8A4; }
+    .run-status.ok      { color: #5EC9A0; }
     .run-status.error   { color: #E07070; }
-    .run-status.running { color: #D4956A; }
+    .run-status.running { color: #7BB8E0; }
 
     /* ── Nav ──────────────────────────────────────────────────────────────── */
     .nav {
@@ -220,22 +226,22 @@
     /* Delete button */
     .delete-btn {
       position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
+      right: 8px;
+      top: 8px;
       opacity: 0;
-      background: none;
-      border: none;
+      background: rgba(224, 112, 112, 0.15);
+      border: 1px solid rgba(224, 112, 112, 0.35);
+      border-radius: 3px;
       cursor: pointer;
-      color: var(--sb-muted);
-      padding: 4px 5px;
+      color: #E09090;
+      padding: 3px 7px;
       font-size: 12px;
       line-height: 1;
-      transition: opacity 0.15s, color 0.15s;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
     }
 
     .report-item:hover .delete-btn { opacity: 1; }
-    .delete-btn:hover { color: #E07070; }
+    .delete-btn:hover { color: #fff; background: #C0392B; border-color: #C0392B; }
 
     .no-reports {
       padding: 18px 20px;
@@ -275,8 +281,8 @@
     }
 
     .sb-footer-link:hover {
-      color: #E07070;
-      border-bottom-color: #E07070;
+      color: #A0C8E8;
+      border-bottom-color: #A0C8E8;
     }
 
     /* ══════════════════════════════════════════════════════════════════════════
@@ -335,9 +341,9 @@
     .reader-wrap::-webkit-scrollbar-thumb { background: var(--rule-strong); }
 
     .reader {
-      max-width: 780px;
+      max-width: 1080px;
       margin: 0 auto;
-      padding: 44px 48px 80px;
+      padding: 44px 56px 80px;
     }
 
     /* ── State views ──────────────────────────────────────────────────────── */
@@ -393,65 +399,93 @@
       align-items: center;
       justify-content: center;
       min-height: calc(100vh - 48px);
-      padding: 48px 32px;
-      text-align: center;
+      padding: 56px 40px;
       gap: 0;
+      text-align: center;
     }
 
-    .run-pulse-ring {
-      width: 48px; height: 48px;
-      border: 2px solid var(--parchment-2);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 24px;
+    .run-arc-wrap {
+      width: 56px; height: 56px;
+      margin-bottom: 28px;
+      flex-shrink: 0;
     }
+    .run-arc-wrap svg { animation: spin 1.2s linear infinite; }
 
-    .run-overlay-eyebrow {
+    .run-eyebrow {
       font-size: 10px;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--accent);
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-weight: 700;
+      margin-bottom: 10px;
     }
 
-    .run-overlay-title {
-      font-size: 24px;
+    .run-headline {
+      font-size: 28px;
       font-weight: 300;
       color: var(--ink);
       letter-spacing: -0.02em;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
-    .run-overlay-sub {
+    .run-estimate {
       font-size: 13.5px;
       color: var(--ink-light);
-      max-width: 340px;
-      line-height: 1.6;
-      margin-bottom: 16px;
-    }
-
-    .run-timer {
-      font-size: 13px;
-      font-family: var(--mono);
-      color: var(--accent);
-      letter-spacing: 0.06em;
+      line-height: 1.7;
+      max-width: 400px;
       margin-bottom: 20px;
     }
+
+    .run-timer-block {
+      font-family: var(--mono);
+      font-size: 20px;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 36px;
+    }
+
+    .run-tip-box {
+      width: 100%;
+      max-width: 480px;
+      padding: 18px 22px;
+      background: var(--parchment-2);
+      border-left: 3px solid var(--accent);
+      text-align: left;
+    }
+    .run-tip-label {
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .run-tip-text {
+      font-size: 13.5px;
+      color: var(--ink-mid);
+      line-height: 1.65;
+      transition: opacity 0.3s;
+    }
+
+    .run-pulse-ring    { display: none; }
+    .run-overlay-eyebrow { display: none; }
+    .run-overlay-title   { display: none; }
+    .run-overlay-sub     { display: none; }
+    .run-timer           { display: none; }
 
     .run-log {
       width: 100%;
       max-width: 520px;
-      background: var(--ink);
+      background: #0F1F30;
       padding: 16px 20px;
       font-family: var(--mono);
       font-size: 11.5px;
-      color: rgba(232, 224, 213, 0.6);
+      color: rgba(180, 210, 235, 0.65);
       max-height: 200px;
       overflow-y: auto;
       line-height: 1.7;
       text-align: left;
+      display: none;   /* hidden until log lines arrive */
     }
 
     .run-log::-webkit-scrollbar { width: 3px; }
@@ -459,7 +493,7 @@
 
     .log-line { display: block; }
     .log-line.err { color: #E07070; }
-    .log-line.ok  { color: #7EC8A4; }
+    .log-line.ok  { color: #5EC9A0; }
 
     /* ══════════════════════════════════════════════════════════════════════════
        REPORT CONTENT
@@ -518,8 +552,8 @@
     }
 
     .report-content h3 a:hover {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
+      color: var(--link);
+      border-bottom-color: var(--link);
     }
 
     /* ↗ arrow only on non-h3 links */
@@ -589,13 +623,14 @@
 
     /* Links */
     .report-content a {
-      color: var(--accent-dark);
+      color: var(--link);
       text-decoration: none;
-      border-bottom: 1px solid var(--accent-light);
-      transition: border-color 0.15s;
+      border-bottom: 1px solid var(--link-light);
+      transition: border-color 0.15s, color 0.15s;
     }
     .report-content a:hover {
-      border-bottom-color: var(--accent);
+      color: #1A5E99;
+      border-bottom-color: var(--link);
     }
 
     /* Horizontal rules */
@@ -625,20 +660,20 @@
     }
 
     .report-content code.badge-critical {
-      border-color: var(--accent);
-      color: var(--accent);
+      border-color: #C0392B;
+      color: #C0392B;
     }
     .report-content code.badge-high {
-      border-color: var(--ink-mid);
-      color: var(--ink-mid);
+      border-color: var(--link);
+      color: var(--link);
     }
     .report-content code.badge-medium {
-      border-color: var(--ink-faint);
-      color: var(--ink-light);
+      border-color: var(--accent);
+      color: var(--accent-dark);
     }
     .report-content code.badge-low {
       border-color: var(--rule-strong);
-      color: var(--ink-faint);
+      color: var(--ink-light);
     }
 
     /* Tables */
@@ -668,7 +703,75 @@
       vertical-align: top;
     }
 
-    .report-content tr:nth-child(even) td { background: var(--parchment); }
+    .report-content tr:nth-child(even) td { background: var(--parchment-2); }
+
+    /* ── Collapsible metadata section ────────────────────────────────────── */
+    .metadata-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      width: 100%;
+    }
+
+    .metadata-toggle .toggle-arrow {
+      display: inline-block;
+      font-size: 9px;
+      color: var(--ink-light);
+      transition: transform 0.2s;
+      transform: rotate(-90deg);   /* collapsed by default */
+    }
+
+    .metadata-toggle.open .toggle-arrow {
+      transform: rotate(0deg);
+    }
+
+    .metadata-body {
+      display: none;   /* collapsed by default */
+      margin-top: 4px;
+    }
+
+    .metadata-body.open {
+      display: block;
+    }
+
+    /* ── Collapsible article sections ────────────────────────────────────── */
+    .article-header {
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 36px 0 0;
+    }
+
+    .article-header h3 {
+      margin: 0;
+      flex: 1;
+    }
+
+    .article-chevron {
+      flex-shrink: 0;
+      margin-top: 5px;
+      font-size: 11px;
+      color: var(--ink-light);
+      transition: transform 0.2s;
+      transform: rotate(0deg);   /* expanded by default */
+      line-height: 1;
+    }
+
+    .article-header.collapsed .article-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .article-body {
+      overflow: hidden;
+      transition: opacity 0.2s;
+    }
+
+    .article-body.collapsed {
+      display: none;
+    }
 
     /* Run failed view */
     .fail-view {
@@ -695,6 +798,329 @@
       font-weight: 300;
       color: var(--ink);
     }
+
+    /* ── Sidebar Sources button ───────────────────────────────────────────── */
+    .sb-sources-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 9px 20px 9px 17px;
+      background: none;
+      border: none;
+      border-left: 3px solid transparent;
+      color: var(--sb-muted);
+      font-size: 12px;
+      font-family: var(--font);
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+    }
+    .sb-sources-btn:hover { background: var(--sb-hover); color: var(--sb-text); }
+    .sb-sources-btn.active {
+      background: var(--sb-active-bg);
+      border-left-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Sources panel ────────────────────────────────────────────────────── */
+    .sources-panel { padding: 44px 56px 80px; max-width: 1080px; margin: 0 auto; }
+
+    .sources-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--rule);
+    }
+
+    .sources-title {
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .btn-add-source {
+      padding: 9px 18px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background 0.15s;
+    }
+    .btn-add-source:hover { background: var(--accent-dark); }
+
+    .sources-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    .sources-table th {
+      text-align: left;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      padding: 8px 12px;
+      border-bottom: 2px solid var(--rule);
+      background: var(--parchment-2);
+    }
+
+    .sources-table td {
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: middle;
+      color: var(--ink-mid);
+    }
+
+    .sources-table tr:hover td { background: var(--parchment-2); }
+
+    .src-name { font-weight: 600; color: var(--ink); }
+    .src-name a { color: var(--link); text-decoration: none; font-weight: 400; font-size: 11px; margin-left: 6px; }
+    .src-name a:hover { text-decoration: underline; }
+
+    .src-type-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border: 1px solid;
+    }
+    .src-type-badge.official { color: var(--accent-dark); border-color: var(--accent); }
+    .src-type-badge.reported { color: var(--link); border-color: var(--link); }
+
+    .src-health-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+    .src-health-dot.ok      { background: var(--accent); }
+    .src-health-dot.warn    { background: #C0392B; }
+    .src-health-dot.unknown { background: var(--ink-faint); }
+
+    /* Error row highlight */
+    .sources-table tr.src-row-error td { background: rgba(192, 57, 43, 0.04); }
+    .sources-table tr.src-row-error:hover td { background: rgba(192, 57, 43, 0.08); }
+
+    .src-error-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+      font-size: 11px;
+      color: #C0392B;
+      background: rgba(192, 57, 43, 0.08);
+      border: 1px solid rgba(192, 57, 43, 0.25);
+      padding: 3px 8px;
+      border-radius: 3px;
+      line-height: 1.4;
+    }
+    .src-error-pill svg { flex-shrink: 0; }
+
+    .src-status-ok {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--ink-light);
+    }
+    .src-status-never {
+      font-size: 12px;
+      color: var(--ink-faint);
+      font-style: italic;
+    }
+    .src-failure-count {
+      font-size: 10.5px;
+      color: #C0392B;
+      margin-top: 2px;
+    }
+
+    .toggle-enabled {
+      position: relative;
+      display: inline-block;
+      width: 36px; height: 20px;
+      cursor: pointer;
+    }
+    .toggle-enabled input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: var(--ink-faint);
+      border-radius: 20px;
+      transition: background 0.2s;
+    }
+    .toggle-enabled input:checked + .toggle-track { background: var(--accent); }
+    .toggle-track::before {
+      content: '';
+      position: absolute;
+      left: 3px; bottom: 3px;
+      width: 14px; height: 14px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .toggle-enabled input:checked + .toggle-track::before { transform: translateX(16px); }
+
+    .btn-src-delete {
+      background: none;
+      border: 1px solid transparent;
+      color: var(--ink-faint);
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 13px;
+      border-radius: 3px;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .btn-src-delete:hover { color: #fff; background: #C0392B; border-color: #C0392B; }
+
+    /* ── Add Source Modal ─────────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--white);
+      width: 520px;
+      max-width: calc(100vw - 40px);
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+      padding: 32px 36px 28px;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .modal-subtitle {
+      font-size: 13px;
+      color: var(--ink-light);
+      margin-bottom: 24px;
+    }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      margin-bottom: 5px;
+    }
+    .form-label span { font-weight: 400; color: var(--ink-light); text-transform: none; letter-spacing: 0; }
+
+    .form-input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--rule-strong);
+      background: var(--parchment);
+      color: var(--ink);
+      font-size: 13.5px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus { border-color: var(--link); }
+
+    .form-select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--rule-strong);
+      background: var(--parchment);
+      color: var(--ink);
+      font-size: 13.5px;
+      font-family: var(--font);
+      outline: none;
+    }
+
+    .form-row { display: flex; gap: 14px; }
+    .form-row .form-group { flex: 1; }
+
+    .form-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--ink-mid);
+      cursor: pointer;
+    }
+    .form-checkbox input { width: 15px; height: 15px; cursor: pointer; }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--rule);
+    }
+
+    .btn-primary {
+      padding: 10px 22px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-primary:disabled { background: var(--ink-faint); cursor: not-allowed; }
+
+    .btn-secondary {
+      padding: 10px 18px;
+      background: none;
+      color: var(--ink-mid);
+      border: 1px solid var(--rule-strong);
+      font-size: 12px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--ink-mid); }
+
+    .modal-close {
+      position: absolute;
+      top: 14px; right: 16px;
+      background: none; border: none;
+      font-size: 20px;
+      color: var(--ink-faint);
+      cursor: pointer;
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--ink); }
+
+    .form-error {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #C0392B;
+    }
   </style>
 </head>
 <body>
@@ -720,6 +1146,12 @@
         <span class="btn-label">Run Now</span>
       </button>
       <div class="run-status" id="runStatus">Ready</div>
+      <button class="sb-sources-btn" id="sourcesBtn" onclick="showSourcesPanel()" style="margin-top:8px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/>
+        </svg>
+        Manage Sources
+      </button>
     </div>
 
     <nav class="nav" id="sidebarNav">
@@ -727,7 +1159,6 @@
     </nav>
 
     <div class="sb-footer">
-      <div class="sb-footer-text">9 sources configured</div>
       <button class="sb-footer-link" onclick="clearAllHistory()">
         Clear all history
       </button>
@@ -762,6 +1193,60 @@
   </main>
 </div>
 
+<!-- ══════════════════════════════════
+     ADD SOURCE MODAL
+══════════════════════════════════ -->
+<div class="modal-overlay" id="addSourceModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddSourceModal()">&times;</button>
+    <div class="modal-title">Add News Source</div>
+    <div class="modal-subtitle">Provide an RSS feed URL and the tool will start monitoring it on the next run.</div>
+
+    <div class="form-group">
+      <label class="form-label">Source Name <span>(required)</span></label>
+      <input class="form-input" id="srcName" type="text" placeholder="e.g. MIT Technology Review AI" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">RSS / Atom Feed URL <span>(required)</span></label>
+      <input class="form-input" id="srcFeedUrl" type="url" placeholder="https://example.com/feed.xml" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Homepage / Section URL <span>(optional)</span></label>
+      <input class="form-input" id="srcHomepageUrl" type="url" placeholder="https://example.com/ai" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Source Type</label>
+        <select class="form-select" id="srcType">
+          <option value="reported">Reported (journalism)</option>
+          <option value="official">Official (lab / company)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Trust Weight <span>(0.1 – 1.0)</span></label>
+        <input class="form-input" id="srcTrust" type="number" min="0.1" max="1.0" step="0.05" value="0.75" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-checkbox">
+        <input type="checkbox" id="srcRequiresUA" />
+        Requires browser User-Agent (check if the feed blocks plain fetches)
+      </label>
+    </div>
+
+    <div class="form-error" id="srcError"></div>
+
+    <div class="modal-actions">
+      <button class="btn-primary" id="srcSubmitBtn" onclick="submitAddSource()">Add Source</button>
+      <button class="btn-secondary" onclick="closeAddSourceModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── State ────────────────────────────────────────────────────────────────────
 let allReports    = [];
@@ -784,7 +1269,13 @@ async function checkInitialRunState() {
     if (data.running) {
       runStartTime = data.started_at ? new Date(data.started_at) : new Date();
       setRunning(true);
-      showRunningOverlay();
+      // Try to load source list for the checklist; fall back to empty
+      try {
+        const sr = await fetch('/api/sources');
+        const sd = await sr.json();
+        runSources = (sd.sources || []).filter(s => s.enabled);
+      } catch(e) { runSources = []; }
+      showRunningOverlay(runSources);
       startPolling();
     }
   } catch (e) { /* ignore */ }
@@ -844,6 +1335,7 @@ function reportItemHTML(report, isCurrent) {
 
 async function loadReport(filename) {
   activeFilename = filename;
+  deactivateSourcesBtn();
   markActive(filename);
   updateTopbar(filename);
   showLoading();
@@ -866,11 +1358,82 @@ function renderReport(data) {
 function postProcessReport() {
   const el = document.getElementById('reportContent');
   if (!el) return;
+
+  // ── Badge colouring ────────────────────────────────────────────────────────
   el.querySelectorAll('code').forEach(c => {
     const t = c.textContent.trim().toLowerCase();
     if (['critical','high','medium','low'].includes(t)) {
       c.classList.add(`badge-${t}`);
     }
+  });
+
+  // ── Collapsible Run Metadata ───────────────────────────────────────────────
+  el.querySelectorAll('h2').forEach(h2 => {
+    if (!h2.textContent.trim().includes('Run Metadata')) return;
+
+    const siblings = [];
+    let node = h2.nextElementSibling;
+    while (node && node.tagName !== 'H2') {
+      siblings.push(node);
+      node = node.nextElementSibling;
+    }
+    if (siblings.length === 0) return;
+
+    const body = document.createElement('div');
+    body.className = 'metadata-body';
+    siblings.forEach(s => body.appendChild(s));
+    h2.insertAdjacentElement('afterend', body);
+
+    const originalHTML = h2.innerHTML;
+    h2.innerHTML = `<span class="metadata-toggle">
+      <span class="toggle-arrow">&#9660;</span>
+      ${originalHTML}
+    </span>`;
+    h2.style.cursor = 'pointer';
+    h2.querySelector('.metadata-toggle').addEventListener('click', () => {
+      const toggle = h2.querySelector('.metadata-toggle');
+      const isOpen = body.classList.toggle('open');
+      toggle.classList.toggle('open', isOpen);
+    });
+  });
+
+  // ── Collapsible article sections (h3) ─────────────────────────────────────
+  // Each h3 becomes a clickable header; everything until the next h3/h2/hr
+  // is wrapped in a collapsible body div.  Expanded by default.
+  el.querySelectorAll('h3').forEach(h3 => {
+    const bodyNodes = [];
+    let node = h3.nextElementSibling;
+    while (node && !['H2','H3','HR'].includes(node.tagName)) {
+      bodyNodes.push(node);
+      node = node.nextElementSibling;
+    }
+    if (bodyNodes.length === 0) return;
+
+    // Wrap body nodes
+    const articleBody = document.createElement('div');
+    articleBody.className = 'article-body';
+    bodyNodes.forEach(n => articleBody.appendChild(n));
+
+    // Wrap h3 in a clickable header row
+    const header = document.createElement('div');
+    header.className = 'article-header';
+
+    const chevron = document.createElement('span');
+    chevron.className = 'article-chevron';
+    chevron.innerHTML = '&#9660;';
+
+    // Move h3 inside header
+    h3.parentNode.insertBefore(header, h3);
+    header.appendChild(chevron);
+    header.appendChild(h3);
+    h3.style.margin = '0';
+
+    header.insertAdjacentElement('afterend', articleBody);
+
+    header.addEventListener('click', () => {
+      const collapsed = articleBody.classList.toggle('collapsed');
+      header.classList.toggle('collapsed', collapsed);
+    });
   });
 }
 
@@ -893,8 +1456,17 @@ function markActive(filename) {
 }
 
 // ── Run pipeline ──────────────────────────────────────────────────────────────
+let runSources = [];   // enabled source list fetched before a run starts
+
 async function startRun() {
   if (isRunning) return;
+  // Pre-fetch source list so we can show a checklist during the run
+  try {
+    const sr = await fetch('/api/sources');
+    const sd = await sr.json();
+    runSources = (sd.sources || []).filter(s => s.enabled);
+  } catch (e) { runSources = []; }
+
   try {
     const res  = await fetch('/api/run', {
       method: 'POST',
@@ -905,7 +1477,7 @@ async function startRun() {
     if (data.error) { setStatus(data.error, 'error'); return; }
     runStartTime = new Date();
     setRunning(true);
-    showRunningOverlay();
+    showRunningOverlay(runSources);
     startPolling();
   } catch (e) { setStatus('Could not connect to server.', 'error'); }
 }
@@ -942,50 +1514,118 @@ function onRunComplete(data) {
 }
 
 // ── Running overlay ───────────────────────────────────────────────────────────
-function showRunningOverlay() {
+const _RUN_TIPS = [
+  "Articles are deduplicated across all sources — if five outlets cover the same story, you see it once.",
+  "Scores are computed from trust weight, topic relevance, source type, and cross-source coverage.",
+  "Official sources (labs and companies) get a +15 score bonus over reported news.",
+  "The pipeline fetches full article text to build richer summaries — no LLM calls needed.",
+  "Stories scoring 80+ are marked CRITICAL, 65+ HIGH, 50+ MEDIUM, and below 50 LOW.",
+  "New sources you add via the Sources panel are picked up on the very next run.",
+  "The tool looks back 14 days on a first run, then only fetches what's new since the last run.",
+  "Article deduplication uses four layers: URL hash, title hash, fuzzy match, and keyword overlap.",
+];
+let _tipIndex    = 0;
+let _tipInterval = null;
+let _checkedSources = new Set();
+
+function showRunningOverlay(sources) {
+  _checkedSources = new Set();
+  _tipIndex = Math.floor(Math.random() * _RUN_TIPS.length);
+
+  const checklistHTML = (sources.length ? sources : [{id:'__unknown', name:'Sources'}])
+    .map(s => `
+      <div class="src-check-row" id="srcrow-${s.id.replace(/\W/g,'_')}">
+        <div class="src-check-icon">
+          <div class="src-check-spinner"></div>
+          <div class="src-check-dot"></div>
+          <div class="src-check-checkmark">✓</div>
+        </div>
+        <span>${esc(s.name)}</span>
+      </div>`).join('');
+
+  const numSources = sources.length || '?';
+  const estTime = sources.length > 10 ? '2 – 5 minutes (first run may take longer)' : '30 seconds – 2 minutes';
+
   document.getElementById('reader').innerHTML = `
     <div class="run-overlay">
-      <div class="run-pulse-ring"></div>
-      <div class="run-overlay-eyebrow">Fetching</div>
-      <div class="run-overlay-title">Collecting AI news</div>
-      <div class="run-overlay-sub">
-        Checking all sources, deduplicating, ranking,
-        and building your report.
+
+      <div class="run-arc-wrap">
+        <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+          <circle cx="28" cy="28" r="24" stroke="var(--parchment-2)" stroke-width="3"/>
+          <circle cx="28" cy="28" r="24" stroke="var(--accent)" stroke-width="3"
+            stroke-dasharray="150 150" stroke-dashoffset="110" stroke-linecap="round"/>
+        </svg>
       </div>
-      <div class="run-timer" id="runTimer">0:00</div>
-      <div class="run-log" id="runLog"></div>
+
+      <div class="run-eyebrow">Fetching</div>
+      <div class="run-headline">Collecting AI News</div>
+      <div class="run-estimate">
+        Checking <strong>${numSources} sources</strong> — fetching articles, deduplicating, and ranking.<br>
+        Estimated time: <strong>${estTime}</strong>
+      </div>
+
+      <div class="run-timer-block" id="runTimer">0:00</div>
+
+      <div class="run-tip-box">
+        <div class="run-tip-label">Did you know?</div>
+        <div class="run-tip-text" id="runTip">${_RUN_TIPS[_tipIndex]}</div>
+      </div>
+
     </div>`;
 
+  // Timer
   if (runTimerInterval) clearInterval(runTimerInterval);
   runTimerInterval = setInterval(() => {
-    const s = Math.floor((Date.now() - runStartTime) / 1000);
+    const s  = Math.floor((Date.now() - runStartTime) / 1000);
     const el = document.getElementById('runTimer');
     if (el) el.textContent = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
   }, 1000);
+
+  // Rotate tips every 8 seconds
+  if (_tipInterval) clearInterval(_tipInterval);
+  _tipInterval = setInterval(() => {
+    _tipIndex = (_tipIndex + 1) % _RUN_TIPS.length;
+    const el = document.getElementById('runTip');
+    if (el) { el.style.opacity = 0; setTimeout(() => { el.textContent = _RUN_TIPS[_tipIndex]; el.style.opacity = 1; }, 300); }
+  }, 8000);
 }
 
 function updateRunningLog(lines) {
-  const el = document.getElementById('runLog');
-  if (!el || !lines.length) return;
-  el.innerHTML = lines.slice(-30).map(line => {
-    const c = line.includes('ERROR')||line.includes('FAILED') ? 'err'
-            : line.includes('complete')||line.includes('success') ? 'ok' : '';
-    return `<span class="log-line ${c}">${esc(line)}</span>`;
-  }).join('\n');
-  el.scrollTop = el.scrollHeight;
+  // Nothing to update in the simplified overlay — tips rotate on their own timer.
 }
 
-function showRunFailed(data) {
+async function showRunFailed(data) {
   clearInterval(runTimerInterval);
   runTimerInterval = null;
-  const lines = (data.output || []).slice(-40);
+  if (_tipInterval) { clearInterval(_tipInterval); _tipInterval = null; }
+
+  // Fetch full log file for complete error details
+  let lines = data.output || [];
+  try {
+    const logRes  = await fetch('/api/run/log');
+    const logData = await logRes.json();
+    if (logData.lines && logData.lines.length > lines.length) lines = logData.lines;
+  } catch(e) { /* fall back to polled output */ }
+
+  const errLine = [...lines].reverse().find(l => /error|traceback|exception/i.test(l)) || '';
+
   document.getElementById('reader').innerHTML = `
     <div class="fail-view">
-      <div class="fail-mark">Run failed</div>
-      <div class="fail-title">Exit code ${data.exit_code}</div>
-      <div class="run-log" style="width:100%;max-width:560px;margin-top:8px">${
-        lines.map(l=>`<span class="log-line ${l.includes('ERROR')?'err':''}">${esc(l)}</span>`).join('\n')
+      <div class="fail-mark">Run failed — Exit code ${data.exit_code}</div>
+      <div class="fail-title" style="font-size:16px;max-width:640px">Something went wrong during the pipeline run.</div>
+      ${errLine ? `<div style="margin:10px 0 4px;padding:11px 16px;background:rgba(192,57,43,0.08);border-left:3px solid #C0392B;font-size:13px;color:#C0392B;max-width:640px;word-break:break-word;text-align:left">${esc(errLine)}</div>` : ''}
+      <div style="width:100%;max-width:640px;margin-top:8px;background:#0F1F30;padding:16px 20px;
+                  font-family:var(--mono);font-size:11.5px;color:rgba(180,210,235,0.65);
+                  max-height:340px;overflow-y:auto;line-height:1.7;text-align:left;display:block">${
+        lines.map(l => {
+          const cls = /error|traceback|exception/i.test(l) ? 'color:#E07070' : /warning/i.test(l) ? 'color:#E8A020' : /complete|success/i.test(l) ? 'color:#5EC9A0' : '';
+          return `<span style="display:block;${cls}">${esc(l)}</span>`;
+        }).join('')
       }</div>
+      <div style="margin-top:16px;display:flex;gap:12px">
+        <button onclick="loadReports()" style="padding:9px 20px;background:var(--accent);color:#fff;border:none;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-family:var(--font)">Back to Reports</button>
+        <button onclick="startRun()" style="padding:9px 20px;background:none;color:var(--ink-mid);border:1px solid var(--rule-strong);font-size:12px;font-family:var(--font);cursor:pointer">Try Again</button>
+      </div>
     </div>`;
 }
 
@@ -1057,6 +1697,7 @@ function setRunning(running) {
     btn.classList.remove('running');
     label.textContent = 'Run Now';
     if (runTimerInterval) { clearInterval(runTimerInterval); runTimerInterval = null; }
+    if (_tipInterval)     { clearInterval(_tipInterval);     _tipInterval = null; }
   }
 }
 
@@ -1101,6 +1742,214 @@ function formatTime(d) {
 
 function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Sources panel ─────────────────────────────────────────────────────────────
+let sourcesVisible = false;
+
+async function showSourcesPanel() {
+  sourcesVisible = true;
+  activeFilename = null;
+  document.querySelectorAll('.report-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('sourcesBtn').classList.add('active');
+  document.getElementById('topbarTitle').textContent = 'Manage Sources';
+  showLoading();
+  try {
+    const res  = await fetch('/api/sources');
+    const data = await res.json();
+    renderSourcesPanel(data.sources || []);
+  } catch (e) {
+    showError('Failed to load sources.');
+  }
+}
+
+function renderSourcesPanel(sources) {
+  const failedCount = sources.filter(s => s.last_error && s.consecutive_failures > 0).length;
+
+  const warnIcon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/>
+  </svg>`;
+
+  const rows = sources.map(s => {
+    const hasFailed = s.last_error && s.consecutive_failures > 0;
+    const rowClass  = hasFailed ? 'src-row-error' : '';
+    const typeClass = s.source_type === 'official' ? 'official' : 'reported';
+    const typeLabel = s.source_type === 'official' ? 'Official' : 'Reported';
+
+    const feedLink = s.feed_url
+      ? `<a href="${esc(s.feed_url)}" target="_blank" rel="noopener">RSS ↗</a>`
+      : '';
+
+    // Error pill shown below the source name when failed
+    const errorPill = hasFailed
+      ? `<div class="src-error-pill">${warnIcon}${esc(s.last_error)}</div>`
+      : '';
+
+    // Status column
+    let statusCell;
+    if (hasFailed) {
+      const lastOk = s.last_success ? s.last_success.slice(0,10) : null;
+      statusCell = `
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="src-health-dot warn"></span>
+          <span style="font-size:12px;color:#C0392B;font-weight:600">Failed</span>
+        </div>
+        ${lastOk ? `<div style="font-size:11px;color:var(--ink-faint);margin-top:2px">Last ok: ${lastOk}</div>` : ''}
+        <div class="src-failure-count">${s.consecutive_failures} consecutive failure${s.consecutive_failures !== 1 ? 's' : ''}</div>`;
+    } else if (s.last_success) {
+      statusCell = `<div class="src-status-ok">
+        <span class="src-health-dot ok"></span>
+        ${s.last_success.slice(0,10)}
+      </div>`;
+    } else {
+      statusCell = `<div class="src-status-never">Not yet checked</div>`;
+    }
+
+    const articles = s.total_articles_fetched > 0
+      ? `${s.total_articles_fetched.toLocaleString()}`
+      : '—';
+
+    const safeId = esc(s.id);
+    return `<tr class="${rowClass}">
+      <td>
+        <div class="src-name">${esc(s.name)} ${feedLink}</div>
+        ${errorPill}
+      </td>
+      <td><span class="src-type-badge ${typeClass}">${typeLabel}</span></td>
+      <td>${(s.trust_weight * 100).toFixed(0)}%</td>
+      <td>${statusCell}</td>
+      <td>${articles}</td>
+      <td>
+        <label class="toggle-enabled" title="${s.enabled ? 'Enabled — click to disable' : 'Disabled — click to enable'}">
+          <input type="checkbox" ${s.enabled ? 'checked' : ''}
+                 onchange="toggleSource('${safeId}', this.checked)">
+          <span class="toggle-track"></span>
+        </label>
+      </td>
+      <td>
+        <button class="btn-src-delete" title="Delete source"
+                onclick="deleteSourceRow('${safeId}', '${esc(s.name)}')">&#x1F5D1;</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Summary banner when sources have failures
+  const failBanner = failedCount > 0 ? `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:12px 16px;
+                background:rgba(192,57,43,0.07);border:1px solid rgba(192,57,43,0.25);border-left:3px solid #C0392B">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="#C0392B"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+      <span style="font-size:13px;color:#C0392B;font-weight:600">${failedCount} source${failedCount !== 1 ? 's' : ''} failed on the last run.</span>
+      <span style="font-size:12px;color:var(--ink-light)">Check the error details below — common causes are invalid feed URLs, paywalls, or sources requiring a browser User-Agent.</span>
+    </div>` : '';
+
+  document.getElementById('reader').innerHTML = `
+    <div class="sources-panel">
+      <div class="sources-header">
+        <div class="sources-title">News Sources <span style="font-size:15px;color:var(--ink-light);font-weight:400">(${sources.length} configured)</span></div>
+        <button class="btn-add-source" onclick="openAddSourceModal()">+ Add Source</button>
+      </div>
+      ${failBanner}
+      <table class="sources-table">
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Type</th>
+            <th>Trust</th>
+            <th>Status</th>
+            <th>Articles</th>
+            <th>Enabled</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:var(--ink-light);padding:24px">No sources configured.</td></tr>'}</tbody>
+      </table>
+    </div>`;
+  document.getElementById('readerWrap').scrollTop = 0;
+}
+
+async function toggleSource(sourceId, enabled) {
+  try {
+    const res  = await fetch(`/api/sources/${encodeURIComponent(sourceId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled }),
+    });
+    const data = await res.json();
+    if (data.error) alert(`Failed: ${data.error}`);
+  } catch (e) { alert('Could not connect to server.'); }
+}
+
+async function deleteSourceRow(sourceId, sourceName) {
+  if (!confirm(`Remove "${sourceName}" from your sources?\n\nThis deletes it from sources.yaml. You can add it back at any time.`)) return;
+  try {
+    const res  = await fetch(`/api/sources/${encodeURIComponent(sourceId)}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.error) { alert(`Failed: ${data.error}`); return; }
+    showSourcesPanel();   // refresh panel
+  } catch (e) { alert('Could not connect to server.'); }
+}
+
+// ── Add Source modal ──────────────────────────────────────────────────────────
+function openAddSourceModal() {
+  document.getElementById('srcName').value      = '';
+  document.getElementById('srcFeedUrl').value   = '';
+  document.getElementById('srcHomepageUrl').value = '';
+  document.getElementById('srcType').value      = 'reported';
+  document.getElementById('srcTrust').value     = '0.75';
+  document.getElementById('srcRequiresUA').checked = false;
+  document.getElementById('srcError').textContent = '';
+  document.getElementById('srcSubmitBtn').disabled = false;
+  document.getElementById('addSourceModal').classList.add('open');
+}
+
+function closeAddSourceModal() {
+  document.getElementById('addSourceModal').classList.remove('open');
+}
+
+async function submitAddSource() {
+  const name       = document.getElementById('srcName').value.trim();
+  const feedUrl    = document.getElementById('srcFeedUrl').value.trim();
+  const homepageUrl= document.getElementById('srcHomepageUrl').value.trim();
+  const sourceType = document.getElementById('srcType').value;
+  const trust      = parseFloat(document.getElementById('srcTrust').value) || 0.75;
+  const requiresUA = document.getElementById('srcRequiresUA').checked;
+  const errEl      = document.getElementById('srcError');
+
+  errEl.textContent = '';
+  if (!name)    { errEl.textContent = 'Source name is required.'; return; }
+  if (!feedUrl) { errEl.textContent = 'Feed URL is required.'; return; }
+  if (!feedUrl.startsWith('http')) { errEl.textContent = 'Feed URL must start with http:// or https://'; return; }
+
+  document.getElementById('srcSubmitBtn').disabled = true;
+  try {
+    const res  = await fetch('/api/sources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, feed_url: feedUrl, homepage_url: homepageUrl,
+        source_type: sourceType, trust_weight: trust,
+        requires_user_agent: requiresUA,
+      }),
+    });
+    const data = await res.json();
+    if (data.error) { errEl.textContent = `Error: ${data.error}`; document.getElementById('srcSubmitBtn').disabled = false; return; }
+    closeAddSourceModal();
+    showSourcesPanel();   // refresh with new source
+  } catch (e) {
+    errEl.textContent = 'Could not connect to server.';
+    document.getElementById('srcSubmitBtn').disabled = false;
+  }
+}
+
+// Close modal on overlay click
+document.getElementById('addSourceModal').addEventListener('click', function(e) {
+  if (e.target === this) closeAddSourceModal();
+});
+
+// When user clicks a report, deactivate sources button
+function deactivateSourcesBtn() {
+  sourcesVisible = false;
+  document.getElementById('sourcesBtn').classList.remove('active');
 }
 
 // ── Start ─────────────────────────────────────────────────────────────────────

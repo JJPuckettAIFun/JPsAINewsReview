@@ -16,6 +16,7 @@ Markdown structure:
 from __future__ import annotations
 
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -46,7 +47,11 @@ def write_markdown(report: Report, path: Optional[Path] = None) -> Path:
         ws = meta.window_start.strftime("%Y-%m-%d %H:%M UTC")
         we = meta.window_end.strftime("%Y-%m-%d %H:%M UTC")
         lines.append(f"- **Window covered:** {ws} → {we}")
-    lines.append(f"- **Sources checked:** {meta.sources_checked}")
+    if meta.checked_source_names:
+        names_str = ", ".join(meta.checked_source_names)
+        lines.append(f"- **Sources checked ({meta.sources_checked}):** {names_str}")
+    else:
+        lines.append(f"- **Sources checked:** {meta.sources_checked}")
     if meta.sources_failed:
         lines.append(f"- **Sources failed:** {meta.sources_failed}")
     lines.append(f"- **Candidates found:** {meta.candidates_found}")
@@ -235,46 +240,54 @@ def _article_to_dict(art: Article) -> dict:
 # ─── Terminal output ──────────────────────────────────────────────────────────
 
 
+def _safe_print(text: str) -> None:
+    """Print text, replacing any characters the terminal can't encode."""
+    safe = text.encode(sys.stdout.encoding or "utf-8", errors="replace").decode(
+        sys.stdout.encoding or "utf-8", errors="replace"
+    )
+    print(safe)
+
+
 def print_terminal_summary(report: Report, top_n: Optional[int] = None) -> None:
     """Print a concise summary to stdout."""
     meta = report.metadata
     items = report.top_items[:top_n] if top_n else report.top_items
 
-    print("\n" + "=" * 70)
-    print("  AI NEWS SUMMARY")
-    print("=" * 70)
+    _safe_print("\n" + "=" * 70)
+    _safe_print("  AI NEWS SUMMARY")
+    _safe_print("=" * 70)
 
     ws = meta.window_start.strftime("%Y-%m-%d") if meta.window_start else "?"
     we = meta.window_end.strftime("%Y-%m-%d") if meta.window_end else "?"
-    print(f"  Window: {ws} -> {we}")
-    print(f"  Sources checked: {meta.sources_checked}  |  "
-          f"Items selected: {meta.articles_selected}")
+    _safe_print(f"  Window: {ws} -> {we}")
+    _safe_print(f"  Sources checked: {meta.sources_checked}  |  "
+                f"Items selected: {meta.articles_selected}")
 
     if meta.sources_failed:
-        print(f"  [!] {meta.sources_failed} source(s) failed")
-    print()
+        _safe_print(f"  [!] {meta.sources_failed} source(s) failed")
+    _safe_print("")
 
     if not items:
-        print("  No new noteworthy developments.\n")
+        _safe_print("  No new noteworthy developments.\n")
         return
 
     for i, cluster in enumerate(items, 1):
         art = cluster.canonical
         date_str = _fmt_date(art.published_at)
         label_str = cluster.label.upper().ljust(8)
-        print(f"  {i:2}. [{label_str}] {art.title}")
-        print(f"       {art.source_name}  |  {date_str}  |  score {cluster.score}")
-        print(f"       {art.url}")
+        _safe_print(f"  {i:2}. [{label_str}] {art.title}")
+        _safe_print(f"       {art.source_name}  |  {date_str}  |  score {cluster.score}")
+        _safe_print(f"       {art.url}")
         if art.summary and art.summary != art.title + ".":
-            print(f"       {_truncate_line(art.summary, 80)}")
-        print()
+            _safe_print(f"       {_truncate_line(art.summary, 80)}")
+        _safe_print("")
 
     if report.honorable_mentions:
-        print(f"  + {len(report.honorable_mentions)} honorable mention(s) — "
-              "use --include-low to see them\n")
+        _safe_print(f"  + {len(report.honorable_mentions)} honorable mention(s) — "
+                    "use --include-low to see them\n")
 
-    print(f"  Report: {meta.report_path or 'reports/'}")
-    print("=" * 70 + "\n")
+    _safe_print(f"  Report: {meta.report_path or 'reports/'}")
+    _safe_print("=" * 70 + "\n")
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────

@@ -46,14 +46,23 @@ from news_monitor.ranker import Ranker, score_to_label
 from news_monitor.summarizer import Summarizer
 from news_monitor.reporter import write_markdown, write_json, print_terminal_summary
 from news_monitor.utils import utcnow, days_ago, parse_since_arg
+from news_monitor.fetchers import ArticleContentFetcher
+from news_monitor.content_extractor import extract_article_text
 
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
+
+_LOG_FILE = Path(__file__).parent / "data" / "last_run.log"
+_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     datefmt="%H:%M:%S",
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler(_LOG_FILE, mode="w", encoding="utf-8"),
+    ],
 )
 logger = logging.getLogger("main")
 
@@ -256,6 +265,8 @@ def _execute_pipeline(
 
     meta.sources_checked = len(fetch_results)
     meta.sources_failed = sum(1 for r in fetch_results if not r.ok)
+    _id_to_name = {s.id: s.name for s in config.sources}
+    meta.checked_source_names = [_id_to_name.get(r.health.source_id, r.health.source_id) for r in fetch_results]
 
     # Update source health in DB
     for result in fetch_results:
@@ -324,6 +335,35 @@ def _execute_pipeline(
     ranker = Ranker(config)
     summarizer = Summarizer()
 
+    # ── Fetch full article content (parallel, best-effort) ───────────────────
+    # Runs after dedup so we only fetch articles that are genuinely new.
+    # Uses a thread pool so the N fetches happen concurrently rather than
+    # sequentially — typical wall-clock cost is ~5-10 s for 20-30 articles.
+    full_text_cache: dict[str, Optional[str]] = {}
+    _content_fetcher = ArticleContentFetcher()
+    try:
+        from concurrent.futures import ThreadPoolExecutor, as_completed as _as_completed
+
+        def _fetch_one_article(raw_article):
+            html, err = _content_fetcher.fetch(raw_article.url)
+            if html:
+                return raw_article.url, extract_article_text(html)
+            return raw_article.url, None
+
+        logger.info("Fetching full article content for %d new articles…", len(new_raw))
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            futs = {pool.submit(_fetch_one_article, r): r for r in new_raw}
+            for fut in _as_completed(futs):
+                url, text = fut.result()
+                full_text_cache[url] = text
+
+        fetched_count = sum(1 for v in full_text_cache.values() if v)
+        logger.info("Full article text retrieved: %d / %d", fetched_count, len(new_raw))
+    except Exception as exc:
+        logger.warning("Article content fetch failed: %s — falling back to feed text", exc)
+    finally:
+        _content_fetcher.close()
+
     # ── Build source coverage map (for multi-source scoring) ─────────────────
     # Group by normalized title to find cross-source coverage
     title_to_sources: dict[str, set[str]] = {}
@@ -378,6 +418,7 @@ def _execute_pipeline(
             category,
             source_cfg.source_type,
             topic_matches,
+            full_text=full_text_cache.get(raw.url),
         )
 
         article = Article(

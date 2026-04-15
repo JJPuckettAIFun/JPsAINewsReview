@@ -15,6 +15,10 @@ API routes:
   POST   /api/history/clear       Wipe all seen-article history (keeps report files)
   POST   /api/run                 Start a new pipeline run
   GET    /api/run/status          Poll current run state
+  GET    /api/sources             List all configured sources with health status
+  POST   /api/sources             Add a new source to sources.yaml
+  PATCH  /api/sources/<id>        Toggle a source enabled/disabled
+  DELETE /api/sources/<id>        Remove a source from sources.yaml
 """
 
 from __future__ import annotations
@@ -29,14 +33,17 @@ import webbrowser
 from datetime import datetime, timezone
 from pathlib import Path
 
+import yaml
 from flask import Flask, jsonify, request, send_from_directory
-from news_monitor.storage import delete_run, clear_seen_state, init_db
+from news_monitor.storage import delete_run, clear_seen_state, init_db, get_all_source_health
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
 
 PROJECT_ROOT = Path(__file__).parent
 REPORTS_DIR = PROJECT_ROOT / "reports"
 TEMPLATES_DIR = PROJECT_ROOT / "templates"
+SOURCES_FILE = PROJECT_ROOT / "config" / "sources.yaml"
+LAST_RUN_LOG = PROJECT_ROOT / "data" / "last_run.log"
 
 # ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -129,6 +136,154 @@ def delete_report(filename: str):
         "articles_removed": result.get("articles_removed", 0),
         "run_found": result.get("found", False),
     })
+
+
+# ─── Routes: Sources ─────────────────────────────────────────────────────────
+
+
+def _load_sources_yaml() -> dict:
+    """Load sources.yaml and return the raw dict."""
+    with open(SOURCES_FILE, encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def _save_sources_yaml(data: dict) -> None:
+    """Write sources.yaml back to disk."""
+    with open(SOURCES_FILE, "w", encoding="utf-8") as f:
+        yaml.dump(data, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+
+def _slugify(name: str) -> str:
+    """Turn a display name into a safe source ID."""
+    slug = name.lower().strip()
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[\s-]+", "_", slug)
+    return slug[:40]
+
+
+@app.route("/api/sources")
+def list_sources():
+    """Return all configured sources merged with their latest health data."""
+    try:
+        raw = _load_sources_yaml()
+        health_map = {h.source_id: h for h in get_all_source_health()}
+
+        sources = []
+        for s in raw.get("sources", []):
+            sid = s.get("id", "")
+            h = health_map.get(sid)
+            sources.append({
+                "id":               sid,
+                "name":             s.get("name", sid),
+                "enabled":          s.get("enabled", True),
+                "source_type":      s.get("source_type", "reported"),
+                "trust_weight":     s.get("trust_weight", 0.5),
+                "feed_url":         s.get("feed_url"),
+                "homepage_url":     s.get("homepage_url", ""),
+                "access_method":    s.get("access_method", "rss"),
+                "requires_user_agent": s.get("requires_user_agent", False),
+                "parser_type":      s.get("parser_type", "rss_standard"),
+                "notes":            s.get("notes", ""),
+                # health
+                "last_checked":     h.last_checked.isoformat() if h and h.last_checked else None,
+                "last_success":     h.last_success.isoformat() if h and h.last_success else None,
+                "last_error":       h.last_error if h else None,
+                "consecutive_failures": h.consecutive_failures if h else 0,
+                "total_articles_fetched": h.total_articles_fetched if h else 0,
+            })
+        return jsonify({"sources": sources})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/sources", methods=["POST"])
+def add_source():
+    """Add a new source to sources.yaml."""
+    body = request.get_json(silent=True) or {}
+
+    name = (body.get("name") or "").strip()
+    feed_url = (body.get("feed_url") or "").strip() or None
+    homepage_url = (body.get("homepage_url") or "").strip()
+    source_type = body.get("source_type", "reported")
+    trust_weight = float(body.get("trust_weight", 0.7))
+    requires_ua = bool(body.get("requires_user_agent", False))
+    custom_id = (body.get("id") or "").strip()
+
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+    if not feed_url:
+        return jsonify({"error": "feed_url is required"}), 400
+
+    try:
+        raw = _load_sources_yaml()
+        existing_ids = {s.get("id") for s in raw.get("sources", [])}
+
+        source_id = custom_id if custom_id else _slugify(name)
+        # Ensure uniqueness
+        base_id, n = source_id, 2
+        while source_id in existing_ids:
+            source_id = f"{base_id}_{n}"
+            n += 1
+
+        access_method = "rss_with_ua" if requires_ua else "rss"
+        new_source = {
+            "id":                 source_id,
+            "name":               name,
+            "enabled":            True,
+            "trust_weight":       round(trust_weight, 2),
+            "source_type":        source_type,
+            "homepage_url":       homepage_url or feed_url,
+            "section_url":        homepage_url or feed_url,
+            "feed_url":           feed_url,
+            "access_method":      access_method,
+            "requires_user_agent": requires_ua,
+            "article_url_patterns": [],
+            "listing_strategy":   "rss",
+            "parser_type":        "rss_standard",
+            "notes":              "Added via web UI.",
+            "curl_examples":      [f'curl -L "{feed_url}"'],
+        }
+
+        raw.setdefault("sources", []).append(new_source)
+        _save_sources_yaml(raw)
+        return jsonify({"added": source_id, "source": new_source})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/sources/<source_id>", methods=["PATCH"])
+def toggle_source(source_id: str):
+    """Toggle a source enabled/disabled."""
+    body = request.get_json(silent=True) or {}
+    try:
+        raw = _load_sources_yaml()
+        for s in raw.get("sources", []):
+            if s.get("id") == source_id:
+                if "enabled" in body:
+                    s["enabled"] = bool(body["enabled"])
+                else:
+                    s["enabled"] = not s.get("enabled", True)
+                _save_sources_yaml(raw)
+                return jsonify({"id": source_id, "enabled": s["enabled"]})
+        return jsonify({"error": "source not found"}), 404
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/sources/<source_id>", methods=["DELETE"])
+def delete_source(source_id: str):
+    """Remove a source from sources.yaml entirely."""
+    try:
+        raw = _load_sources_yaml()
+        sources = raw.get("sources", [])
+        original_count = len(sources)
+        raw["sources"] = [s for s in sources if s.get("id") != source_id]
+        if len(raw["sources"]) == original_count:
+            return jsonify({"error": "source not found"}), 404
+        _save_sources_yaml(raw)
+        return jsonify({"deleted": source_id})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 # ─── Routes: History ─────────────────────────────────────────────────────────
@@ -226,6 +381,18 @@ def _run_pipeline(extra_args: list[str]) -> None:
         _run_state["finished_at"] = _iso_now()
         _run_state["exit_code"] = exit_code
         _run_state["output"] = output_lines
+
+
+@app.route("/api/run/log")
+def run_log():
+    """Return the full last_run.log file contents."""
+    try:
+        if LAST_RUN_LOG.exists():
+            lines = LAST_RUN_LOG.read_text(encoding="utf-8", errors="replace").splitlines()
+            return jsonify({"lines": lines})
+        return jsonify({"lines": []})
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 # ─── Markdown renderer ────────────────────────────────────────────────────────
