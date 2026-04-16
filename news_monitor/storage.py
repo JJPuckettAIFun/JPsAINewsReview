@@ -304,6 +304,22 @@ def update_source_health(health: SourceHealth, path: Path = STATE_DB) -> None:
         )
 
 
+def get_known_source_ids(path: Path = STATE_DB) -> set[str]:
+    """
+    Return source_ids that have at least one successful fetch on record.
+    Sources NOT in this set are considered new and will receive a full
+    14-day lookback window on their first run.
+    """
+    try:
+        with _db(path) as conn:
+            rows = conn.execute(
+                "SELECT source_id FROM source_health WHERE last_success IS NOT NULL"
+            ).fetchall()
+            return {r["source_id"] for r in rows}
+    except Exception:
+        return set()
+
+
 def get_all_source_health(path: Path = STATE_DB) -> list[SourceHealth]:
     try:
         with _db(path) as conn:

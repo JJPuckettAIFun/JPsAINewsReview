@@ -35,6 +35,7 @@ from news_monitor.storage import (
     get_last_successful_run, mark_articles_seen,
     get_seen_fingerprints, get_seen_title_fingerprints,
     update_source_health, get_all_source_health,
+    get_known_source_ids,
     upsert_cluster, clear_seen_state,
     STATE_DB,
 )
@@ -259,6 +260,10 @@ def _execute_pipeline(
             )
             return 1
 
+    # ── Snapshot which sources have prior history (before this run updates health) ─
+    # Used below to give brand-new sources a full 14-day lookback window.
+    known_source_ids = get_known_source_ids()
+
     # ── Fetch all sources ─────────────────────────────────────────────────────
     registry = SourceRegistry(config)
     fetch_results = registry.fetch_all(source_ids=source_ids)
@@ -280,19 +285,33 @@ def _execute_pipeline(
     logger.info("Total raw articles collected: %d", len(all_raw))
 
     # ── Date filtering ────────────────────────────────────────────────────────
-    # Only hard-reject articles that are clearly older than the lookback window.
-    # We add a 48-hour buffer before window_start to handle clock skew, feeds
-    # that batch-publish with stale dates, and timezone mismatches.
-    # The seen-URL dedup layer below is the real gatekeeper for "already reported".
+    # Per-source floors:
+    #   - Existing sources: window_start - 48h buffer (normal cadence)
+    #   - New sources (no prior successful fetch): 14-day lookback so their
+    #     first run surfaces a useful backfill of recent content.
+    # The seen-URL dedup layer is the real gatekeeper for "already reported".
     from datetime import timedelta
-    date_floor = window_start - timedelta(hours=48)
+    default_floor = window_start - timedelta(hours=48)
+    new_source_floor = days_ago(DEFAULT_LOOKBACK_DAYS)
+
+    # Log any sources getting the extended window
+    new_sources_this_run = [
+        r.health.source_id for r in fetch_results
+        if r.health.source_id not in known_source_ids
+    ]
+    if new_sources_this_run:
+        logger.info(
+            "New sources detected — applying 14-day lookback: %s",
+            ", ".join(new_sources_this_run),
+        )
 
     date_filtered = []
     for article in all_raw:
+        floor = new_source_floor if article.source_id not in known_source_ids else default_floor
         if article.published_at is None:
             # No date — keep it; dedup will catch it if seen before
             date_filtered.append(article)
-        elif article.published_at >= date_floor:
+        elif article.published_at >= floor:
             date_filtered.append(article)
 
     logger.info("After date filter: %d articles", len(date_filtered))
