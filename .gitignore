@@ -37,3 +37,6 @@ desktop.ini
 .idea/
 *.swp
 *.swo
+
+# ── Claude Code local settings (contains machine-specific paths) ─────────────
+.claude/
