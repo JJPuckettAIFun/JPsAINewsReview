@@ -71,7 +71,7 @@ logger = logging.getLogger("main")
 # ─── Constants ───────────────────────────────────────────────────────────────
 
 DEFAULT_LOOKBACK_DAYS = 14
-GENERAL_FEED_SOURCE_IDS = {"semafor"}    # sources needing stricter topic filtering
+GENERAL_FEED_SOURCE_IDS = {"semafor", "hacker_news"}    # sources needing stricter topic filtering
 
 
 # ─── CLI ─────────────────────────────────────────────────────────────────────
