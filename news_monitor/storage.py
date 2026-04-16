@@ -154,18 +154,18 @@ def finish_run(run_id: str, meta: RunMetadata, path: Path = STATE_DB) -> None:
 
 def get_last_successful_run(path: Path = STATE_DB) -> Optional[datetime]:
     """
-    Return the finished_at datetime of the most recent successful run
-    that actually selected articles (articles_selected > 0).
+    Return the finished_at datetime of the most recent successful run.
 
-    Runs that completed but found nothing are intentionally excluded —
-    they should not advance the window start, otherwise the next run
-    would look at an empty window and also find nothing.
+    Any completed run (status='success') advances the window — including
+    runs that found articles but none scored above the display threshold.
+    The seen-article dedup layer ensures nothing is re-shown regardless of
+    the window, so advancing the window on low-result runs is always safe.
     """
     try:
         with _db(path) as conn:
             row = conn.execute(
                 """SELECT finished_at FROM runs
-                   WHERE status='success' AND articles_selected > 0
+                   WHERE status='success'
                    ORDER BY finished_at DESC LIMIT 1"""
             ).fetchone()
             if row and row["finished_at"]:
@@ -347,41 +347,44 @@ def clear_seen_state(path: Path = STATE_DB) -> None:
 
 def delete_run(report_path: str, path: Path = STATE_DB) -> dict:
     """
-    Delete a run and all seen_articles recorded during it, identified by
-    the report file path stored in the runs table.
+    Delete ALL runs associated with a report file and their seen_articles.
+
+    Multiple runs on the same day share the same report filename (e.g.
+    2026-04-16-ai-news-summary.md). Using fetchone() previously left
+    stale run records in the DB, causing get_last_successful_run() to
+    return a recent timestamp and narrow the window on the next run —
+    producing inconsistent article counts. Now all matching records are
+    cleared together.
 
     Always cleans up orphaned seen_articles (rows whose run_id no longer
-    exists in the runs table) even if the path lookup fails — this covers
-    path-format mismatches on Windows and any other edge cases.
+    exists in the runs table) even if the path lookup fails.
 
     Returns a dict with keys:
-      run_id           - the deleted run_id (or None if not found by path)
-      articles_removed - number of seen_article rows deleted
-      found            - True if a matching run record was found
+      run_id           - the last deleted run_id (or None if not found)
+      articles_removed - total seen_article rows deleted
+      found            - True if at least one matching run record was found
     """
     with _db(path) as conn:
-        # Find the run by report_path — try exact match first, then basename
+        # Find ALL runs sharing this report path (same-day runs reuse the file)
         basename = Path(report_path).name
-        row = conn.execute(
+        rows = conn.execute(
             """SELECT run_id FROM runs
                WHERE report_path = ?
                   OR report_path LIKE ?
                   OR report_path LIKE ?""",
             (report_path, f"%{basename}", f"%/{basename}"),
-        ).fetchone()
+        ).fetchall()
 
         run_id = None
         articles_removed = 0
 
-        if row:
+        for row in rows:
             run_id = row["run_id"]
-            # Delete seen_articles belonging to this run
             cur = conn.execute(
                 "DELETE FROM seen_articles WHERE first_seen_run = ?",
                 (run_id,),
             )
             articles_removed += cur.rowcount
-            # Delete the run record
             conn.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
 
         # Always sweep for orphaned seen_articles whose run no longer exists.
@@ -395,7 +398,7 @@ def delete_run(report_path: str, path: Path = STATE_DB) -> dict:
         articles_removed += cur2.rowcount
 
     return {
-        "found": row is not None,
+        "found": len(rows) > 0,
         "run_id": run_id,
         "articles_removed": articles_removed,
     }

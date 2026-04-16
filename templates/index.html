@@ -773,6 +773,71 @@
       display: none;
     }
 
+    /* ── Source filter bar ───────────────────────────────────────────────────── */
+    .source-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 14px 0 20px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 4px;
+    }
+
+    .source-filter-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      white-space: nowrap;
+      margin-right: 2px;
+      flex-shrink: 0;
+    }
+
+    .source-filter-pill {
+      padding: 4px 13px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--rule-strong);
+      background: none;
+      color: var(--ink-mid);
+      cursor: pointer;
+      font-family: var(--font);
+      border-radius: 100px;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      white-space: nowrap;
+      line-height: 1.5;
+    }
+
+    .source-filter-pill:hover {
+      border-color: var(--accent);
+      color: var(--accent-dark);
+      background: var(--accent-wash);
+    }
+
+    .source-filter-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .source-filter-pill.all-pill.active {
+      background: var(--ink-mid);
+      border-color: var(--ink-mid);
+      color: #fff;
+    }
+
+    .source-filter-count {
+      opacity: 0.6;
+      font-size: 10px;
+      margin-left: 3px;
+    }
+
+    .article-wrapper.source-hidden {
+      display: none;
+    }
+
     /* Run failed view */
     .fail-view {
       display: flex;
@@ -1397,10 +1462,25 @@ function postProcessReport() {
     });
   });
 
-  // ── Collapsible article sections (h3) ─────────────────────────────────────
-  // Each h3 becomes a clickable header; everything until the next h3/h2/hr
-  // is wrapped in a collapsible body div.  Expanded by default.
+  // ── Collapsible article sections + source filter bar ──────────────────────
+  // Each h3 becomes a clickable header; body content is collapsible.
+  // Each article is wrapped in .article-wrapper[data-source] for filtering.
+  // After processing all articles, a source filter pill bar is injected above
+  // the first article (only when multiple sources are present).
+
+  const sourceCount = new Map();   // source name -> article count
+  const wrappers = [];             // ordered list of article wrappers
+
   el.querySelectorAll('h3').forEach(h3 => {
+    // Extract source name from the metadata paragraph (h3 + p byline)
+    let sourceName = null;
+    const maybeMetaP = h3.nextElementSibling;
+    if (maybeMetaP && maybeMetaP.tagName === 'P') {
+      const m = maybeMetaP.textContent.match(/Source:\s*([^|]+)/);
+      if (m) sourceName = m[1].trim();
+    }
+
+    // Collect body nodes up to the next h3/h2/hr
     const bodyNodes = [];
     let node = h3.nextElementSibling;
     while (node && !['H2','H3','HR'].includes(node.tagName)) {
@@ -1409,7 +1489,7 @@ function postProcessReport() {
     }
     if (bodyNodes.length === 0) return;
 
-    // Wrap body nodes
+    // Wrap body nodes in collapsible div
     const articleBody = document.createElement('div');
     articleBody.className = 'article-body';
     bodyNodes.forEach(n => articleBody.appendChild(n));
@@ -1417,23 +1497,80 @@ function postProcessReport() {
     // Wrap h3 in a clickable header row
     const header = document.createElement('div');
     header.className = 'article-header';
-
     const chevron = document.createElement('span');
     chevron.className = 'article-chevron';
     chevron.innerHTML = '&#9660;';
-
-    // Move h3 inside header
     h3.parentNode.insertBefore(header, h3);
     header.appendChild(chevron);
     header.appendChild(h3);
     h3.style.margin = '0';
-
     header.insertAdjacentElement('afterend', articleBody);
-
     header.addEventListener('click', () => {
       const collapsed = articleBody.classList.toggle('collapsed');
       header.classList.toggle('collapsed', collapsed);
     });
+
+    // Wrap header + body in article-wrapper for source filtering
+    const wrapper = document.createElement('div');
+    wrapper.className = 'article-wrapper';
+    if (sourceName) {
+      wrapper.dataset.source = sourceName;
+      sourceCount.set(sourceName, (sourceCount.get(sourceName) || 0) + 1);
+    }
+    header.parentNode.insertBefore(wrapper, header);
+    wrapper.appendChild(header);
+    wrapper.appendChild(articleBody);
+
+    // Pull the trailing HR into the wrapper so it hides with the article
+    const trailingHR = wrapper.nextElementSibling;
+    if (trailingHR && trailingHR.tagName === 'HR') {
+      wrapper.appendChild(trailingHR);
+    }
+
+    wrappers.push(wrapper);
+  });
+
+  // ── Inject source filter bar above first article ──────────────────────────
+  if (sourceCount.size > 1 && wrappers.length > 0) {
+    const bar = document.createElement('div');
+    bar.className = 'source-filter-bar';
+    bar.id = 'sourceFilterBar';
+
+    // "All Sources" pill — active by default
+    const allPill = document.createElement('button');
+    allPill.className = 'source-filter-pill all-pill active';
+    allPill.innerHTML = `<span class="source-filter-label" style="font-size:12px;letter-spacing:0;text-transform:none;color:inherit;margin:0">All Sources</span>
+      <span class="source-filter-count">${wrappers.length}</span>`;
+    allPill.addEventListener('click', () => filterBySource(null, allPill));
+    bar.appendChild(allPill);
+
+    // One pill per source, sorted by count desc then alpha
+    const sorted = [...sourceCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    sorted.forEach(([name, count]) => {
+      const pill = document.createElement('button');
+      pill.className = 'source-filter-pill';
+      pill.dataset.filterSource = name;
+      pill.innerHTML = `${esc(name)}<span class="source-filter-count">${count}</span>`;
+      pill.addEventListener('click', () => filterBySource(name, pill));
+      bar.appendChild(pill);
+    });
+
+    wrappers[0].parentNode.insertBefore(bar, wrappers[0]);
+  }
+}
+
+function filterBySource(sourceName, clickedPill) {
+  const el = document.getElementById('reportContent');
+  if (!el) return;
+
+  // Update pill active states
+  el.querySelectorAll('.source-filter-pill').forEach(p => p.classList.remove('active'));
+  if (clickedPill) clickedPill.classList.add('active');
+
+  // Show / hide article wrappers
+  el.querySelectorAll('.article-wrapper').forEach(w => {
+    const match = !sourceName || w.dataset.source === sourceName;
+    w.classList.toggle('source-hidden', !match);
   });
 }
 

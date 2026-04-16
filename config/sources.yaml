@@ -389,3 +389,20 @@ sources:
   notes: Added via web UI.
   curl_examples:
   - curl -L "https://tldr.tech/ai/rss"
+- id: hacker_news
+  name: Hacker News
+  enabled: true
+  trust_weight: 0.75
+  source_type: reported
+  homepage_url: https://news.ycombinator.com
+  section_url: https://news.ycombinator.com
+  feed_url: https://news.ycombinator.com/rss
+  access_method: rss
+  requires_user_agent: false
+  article_url_patterns: []
+  listing_strategy: rss
+  parser_type: rss_standard
+  notes: Official HN RSS feed — returns current top 30 frontpage stories. Third-party
+    hnrss.org was tested but proved unreliable (502 errors). Official feed is stable.
+  curl_examples:
+  - curl -L "https://news.ycombinator.com/rss"

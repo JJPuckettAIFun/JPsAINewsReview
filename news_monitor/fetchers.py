@@ -240,12 +240,16 @@ class ArticleContentFetcher:
 
     def __init__(self):
         # Lightweight session: no retry adapter (speed > resilience here)
+        # NOTE: Accept-Encoding is intentionally omitted — requests manages it
+        # automatically and only advertises encodings it can decompress (gzip,
+        # deflate). Manually setting "gzip, deflate, br" causes brotli-capable
+        # servers to return brotli-compressed bytes that requests can't decode,
+        # producing garbled text in the summary.
         self._session = requests.Session()
         self._session.headers.update({
             "User-Agent": BROWSER_UA,
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
-            "Accept-Encoding": "gzip, deflate, br",
         })
 
     def fetch(self, url: str) -> tuple[Optional[str], Optional[str]]:
