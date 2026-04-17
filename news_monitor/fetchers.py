@@ -276,7 +276,16 @@ class ArticleContentFetcher:
         if "text/html" not in content_type and "application/xhtml" not in content_type:
             return None, f"unexpected content-type: {content_type}"
 
-        return resp.text, None
+        # requests defaults to ISO-8859-1 for text/html when no charset is
+        # declared in the Content-Type header (per HTTP spec). Most modern pages
+        # are UTF-8 regardless. Decoding UTF-8 bytes as latin-1 produces mojibake
+        # (e.g. â for curly quotes). Fix: always try UTF-8 first, fall back to
+        # the declared/detected encoding only if UTF-8 decoding fails.
+        try:
+            return resp.content.decode("utf-8"), None
+        except UnicodeDecodeError:
+            resp.encoding = resp.apparent_encoding or "utf-8"
+            return resp.text, None
 
     def close(self):
         self._session.close()
