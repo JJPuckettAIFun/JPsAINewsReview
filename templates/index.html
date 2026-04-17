@@ -10,7 +10,7 @@
 
     /* ── Design tokens ─────────────────────────────────────────────────────── */
     :root {
-      /* Palette: deep navy + light grey + teal-green + blue */
+      /* Palette: deep navy + light grey + blue */
       --ink:          #1A2433;
       --ink-mid:      #3C5068;
       --ink-light:    #6B87A0;
@@ -20,10 +20,10 @@
       --parchment-2:  #E6EDF4;
       --white:        #FFFFFF;
 
-      --accent:       #2A9C72;   /* teal-green — primary action / highlight */
-      --accent-dark:  #1E7D5A;
-      --accent-wash:  rgba(42, 156, 114, 0.08);
-      --accent-light: #D0EDE4;
+      --accent:       #3b82f6;   /* blue — primary action / highlight */
+      --accent-dark:  #2563eb;
+      --accent-wash:  rgba(59, 130, 246, 0.08);
+      --accent-light: #dbeafe;
 
       --link:         #2F7EC0;   /* blue for body links */
       --link-light:   #DAEAF6;
@@ -31,13 +31,13 @@
       --rule:         rgba(26, 36, 51, 0.10);
       --rule-strong:  rgba(26, 36, 51, 0.22);
 
-      /* Sidebar */
-      --sb-bg:        #1C3250;   /* deep navy */
-      --sb-rule:      rgba(255, 255, 255, 0.09);
-      --sb-text:      #CFE0EF;   /* bright, clearly readable */
-      --sb-muted:     #7899B4;   /* visible muted — not too dark */
-      --sb-hover:     rgba(255, 255, 255, 0.07);
-      --sb-active-bg: rgba(42, 156, 114, 0.20);
+      /* Sidebar — navy-to-blue gradient theme */
+      --sb-bg:        linear-gradient(175deg, #0b1829 0%, #0e2448 50%, #163567 100%);
+      --sb-rule:      rgba(100, 165, 255, 0.14);
+      --sb-text:      #c8ddf5;
+      --sb-muted:     #5b8cbf;
+      --sb-hover:     rgba(100, 165, 255, 0.10);
+      --sb-active-bg: rgba(59, 130, 246, 0.18);
 
       --sidebar-w:    268px;
 
@@ -59,80 +59,90 @@
     .sidebar {
       width: var(--sidebar-w);
       min-width: var(--sidebar-w);
-      background: var(--sb-bg);
+      /* Stacked: grid lines on top, then edge glows, then base gradient */
+      background:
+        repeating-linear-gradient(0deg,  transparent, transparent 47px, rgba(100,165,255,0.06) 48px),
+        repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(100,165,255,0.06) 48px),
+        radial-gradient(ellipse 120% 40% at 50% 0%,   rgba(30,90,180,0.35) 0%, transparent 70%),
+        radial-gradient(ellipse 120% 40% at 50% 100%, rgba(20,60,140,0.30) 0%, transparent 70%),
+        linear-gradient(175deg, #0b1829 0%, #0e2448 50%, #163567 100%);
       display: flex;
       flex-direction: column;
-      border-right: 1px solid var(--sb-rule);
+      border-right: 1px solid rgba(100, 165, 255, 0.18);
       overflow: hidden;
     }
 
     /* ── Masthead ─────────────────────────────────────────────────────────── */
     .masthead {
-      padding: 24px 20px 20px;
-      border-bottom: 2px solid var(--accent);
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid rgba(100,165,255,0.16);
       flex-shrink: 0;
-      background: rgba(0,0,0,0.18);
     }
 
-    .masthead-eyebrow {
-      font-size: 9.5px;
-      letter-spacing: 0.20em;
-      text-transform: uppercase;
-      color: var(--sb-text);
-      opacity: 0.7;
-      margin-bottom: 5px;
+    .masthead-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 2px;
+    }
+
+    /* Square accent icon */
+    .masthead-icon {
+      width: 30px;
+      height: 30px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
     .masthead-title {
-      font-size: 22px;
+      font-size: 16px;
       font-weight: 700;
-      color: #FFFFFF;
+      color: #ffffff;
       letter-spacing: -0.01em;
-      line-height: 1.1;
+      line-height: 1.2;
     }
 
-    .masthead-title span {
-      color: var(--accent);
+    .masthead-title span { color: var(--accent); }
+
+    .masthead-sub {
+      font-size: 10px;
+      color: var(--sb-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-top: 6px;
     }
 
     /* ── Run section ──────────────────────────────────────────────────────── */
     .run-section {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--sb-rule);
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid rgba(100,165,255,0.16);
       flex-shrink: 0;
     }
 
     .run-btn {
       width: 100%;
-      padding: 10px 14px;
+      padding: 9px 14px;
       background: var(--accent);
       color: #fff;
       border: none;
-      border-radius: 0;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      transition: background 0.15s;
-      position: relative;
-    }
-
-    .run-btn::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border: 1px solid rgba(255,255,255,0.15);
-      pointer-events: none;
+      gap: 7px;
+      transition: background 0.15s, opacity 0.15s;
     }
 
     .run-btn:hover:not(:disabled) { background: var(--accent-dark); }
-    .run-btn:disabled { background: #333; color: var(--sb-muted); cursor: not-allowed; }
-    .run-btn:disabled::after { display: none; }
+    .run-btn:disabled { background: rgba(255,255,255,0.06); color: var(--sb-muted); cursor: not-allowed; }
 
     .run-btn .spinner {
       width: 12px; height: 12px;
@@ -143,49 +153,78 @@
       display: none;
       flex-shrink: 0;
     }
-    .run-btn.running .spinner { display: block; }
+    .run-btn.running .spinner  { display: block; }
     .run-btn.running .btn-icon { display: none; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .run-status {
-      margin-top: 9px;
+      margin-top: 8px;
       font-size: 11px;
       color: var(--sb-muted);
       min-height: 14px;
-      letter-spacing: 0.01em;
+      padding: 0 2px;
     }
-    .run-status.ok      { color: #5EC9A0; }
-    .run-status.error   { color: #E07070; }
-    .run-status.running { color: #7BB8E0; }
+    .run-status.ok      { color: #60a5fa; }
+    .run-status.error   { color: #f87171; }
+    .run-status.running { color: #60a5fa; }
+
+    /* Manage Sources button — subtle secondary style */
+    .sb-sources-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px 14px;
+      background: transparent;
+      color: var(--sb-muted);
+      border: 1px solid var(--sb-rule);
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      font-family: var(--font);
+    }
+    .sb-sources-btn:hover {
+      color: var(--sb-text);
+      border-color: rgba(255,255,255,0.18);
+      background: var(--sb-hover);
+    }
 
     /* ── Nav ──────────────────────────────────────────────────────────────── */
     .nav {
       flex: 1;
       overflow-y: auto;
-      padding: 4px 0 8px;
+      padding: 8px 0 8px;
     }
 
     .nav::-webkit-scrollbar { width: 3px; }
     .nav::-webkit-scrollbar-track { background: transparent; }
-    .nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
+    .nav::-webkit-scrollbar-thumb { background: rgba(100,165,255,0.22); border-radius: 2px; }
 
     .nav-label {
-      padding: 14px 20px 5px;
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
+      padding: 12px 18px 4px;
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--sb-muted);
     }
 
     .report-item {
       display: flex;
-      flex-direction: column;
-      padding: 9px 20px 9px 17px;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px 9px 16px;
+      margin: 1px 8px;
       cursor: pointer;
-      border-left: 3px solid transparent;
-      transition: background 0.1s, border-color 0.1s;
+      border-radius: 6px;
+      border-left: none;
+      transition: background 0.12s;
       position: relative;
     }
 
@@ -193,96 +232,106 @@
 
     .report-item.active {
       background: var(--sb-active-bg);
-      border-left-color: var(--accent);
     }
+
+    /* Colored dot indicator on left of active/hover item */
+    .report-item-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--sb-rule);
+      transition: background 0.12s;
+    }
+    .report-item:hover  .report-item-dot { background: rgba(120,185,255,0.55); }
+    .report-item.active .report-item-dot { background: #60b4ff; box-shadow: 0 0 6px rgba(96,180,255,0.7); }
+
+    /* Text block */
+    .report-item-body { flex: 1; min-width: 0; }
 
     .report-item-date {
       font-size: 13px;
       font-weight: 500;
       color: var(--sb-text);
-      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .report-item.active .report-item-date { color: #fff; }
+    .report-item.active .report-item-date { color: #ddefff; font-weight: 600; }
 
     .report-item-meta {
       font-size: 11px;
       color: var(--sb-muted);
-      margin-top: 1px;
+      margin-top: 2px;
     }
 
     .report-item-tag {
       display: inline-block;
-      margin-top: 5px;
+      margin-top: 4px;
       font-size: 9px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      padding: 1px 6px;
+      color: #7ec8ff;
+      background: rgba(94,170,255,0.14);
+      border-radius: 3px;
+      padding: 2px 6px;
     }
 
     /* Delete button */
     .delete-btn {
-      position: absolute;
-      right: 8px;
-      top: 8px;
       opacity: 0;
-      background: rgba(224, 112, 112, 0.15);
-      border: 1px solid rgba(224, 112, 112, 0.35);
-      border-radius: 3px;
+      background: transparent;
+      border: 1px solid rgba(248,113,113,0.30);
+      border-radius: 4px;
       cursor: pointer;
-      color: #E09090;
+      color: rgba(248,113,113,0.70);
       padding: 3px 7px;
-      font-size: 12px;
+      font-size: 11px;
       line-height: 1;
+      flex-shrink: 0;
       transition: opacity 0.15s, color 0.15s, background 0.15s;
     }
 
     .report-item:hover .delete-btn { opacity: 1; }
-    .delete-btn:hover { color: #fff; background: #C0392B; border-color: #C0392B; }
+    .delete-btn:hover { color: #fff; background: #dc2626; border-color: #dc2626; }
 
     .no-reports {
-      padding: 18px 20px;
+      padding: 20px 18px;
       font-size: 12px;
       color: var(--sb-muted);
-      line-height: 1.6;
+      line-height: 1.65;
     }
 
     /* ── Sidebar footer ───────────────────────────────────────────────────── */
     .sb-footer {
-      padding: 14px 20px;
-      border-top: 1px solid var(--sb-rule);
+      padding: 12px 16px;
+      border-top: 1px solid rgba(100,165,255,0.16);
       flex-shrink: 0;
     }
 
-    .sb-footer-text {
-      font-size: 10.5px;
-      color: var(--sb-muted);
-      letter-spacing: 0.01em;
-    }
-
     .sb-footer-link {
-      display: inline-block;
-      margin-top: 7px;
-      font-size: 10.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 11px;
       color: var(--sb-muted);
       cursor: pointer;
-      text-decoration: none;
-      border-bottom: 1px solid transparent;
-      transition: color 0.15s, border-color 0.15s;
       background: none;
-      border-left: none;
-      border-right: none;
-      border-top: none;
-      padding: 0;
+      border: none;
+      border-radius: 5px;
       font-family: var(--font);
+      letter-spacing: 0.01em;
+      transition: color 0.15s, background 0.15s;
+      text-align: left;
     }
 
     .sb-footer-link:hover {
-      color: #A0C8E8;
-      border-bottom-color: #A0C8E8;
+      color: var(--sb-text);
+      background: var(--sb-hover);
     }
 
     /* ══════════════════════════════════════════════════════════════════════════
@@ -295,38 +344,6 @@
       overflow: hidden;
       background: var(--parchment);
       min-width: 0;
-    }
-
-    /* ── Top bar ──────────────────────────────────────────────────────────── */
-    .topbar {
-      background: var(--white);
-      border-bottom: 1px solid var(--rule);
-      padding: 0 36px;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
-    }
-
-    .topbar-label {
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--ink-faint);
-      font-weight: 600;
-    }
-
-    .topbar-divider {
-      width: 1px;
-      height: 14px;
-      background: var(--rule);
-    }
-
-    .topbar-title {
-      font-size: 13px;
-      color: var(--ink-mid);
-      font-weight: 400;
     }
 
     /* ── Reader ───────────────────────────────────────────────────────────── */
@@ -352,7 +369,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: calc(100vh - 48px);
+      min-height: 100vh;
       padding: 40px;
       text-align: center;
       gap: 14px;
@@ -398,7 +415,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: calc(100vh - 48px);
+      min-height: 100vh;
       padding: 56px 40px;
       gap: 0;
       text-align: center;
@@ -493,21 +510,90 @@
 
     .log-line { display: block; }
     .log-line.err { color: #E07070; }
-    .log-line.ok  { color: #5EC9A0; }
+    .log-line.ok  { color: #60a5fa; }
 
     /* ══════════════════════════════════════════════════════════════════════════
        REPORT CONTENT
     ══════════════════════════════════════════════════════════════════════════ */
     .report-content { color: var(--ink); line-height: 1.75; }
 
-    /* Report title */
-    .report-content h1 {
-      font-size: 32px;
-      font-weight: 200;
+    /* Report title — hidden; replaced by .report-hero in postProcessReport() */
+    .report-content h1 { display: none; }
+
+    /* ── Report hero header ───────────────────────────────────────────────── */
+    .report-hero {
+      /* Break out of reader padding to go full-bleed */
+      margin: -44px -56px 44px;
+      padding: 52px 56px 44px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .report-hero::after {
+      /* Bottom fade so content blends into page */
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 48px;
+      background: linear-gradient(transparent, var(--parchment));
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* Decorative hex panels — absolutely positioned, pointer-events off */
+    .report-hero-hex {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 220px;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .report-hero-hex-left  { left: 0; }
+    .report-hero-hex-right { right: 0; transform: scaleX(-1); }
+
+    /* Glow dots scattered in the hero */
+    .report-hero-dots {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Text sits above decorations */
+    .report-hero-text {
+      position: relative;
+      z-index: 2;
+    }
+
+    .report-hero-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #7ec8ff;
+      margin-bottom: 12px;
+    }
+
+    .report-hero-title {
+      font-size: 42px;
+      font-weight: 700;
+      color: #ffffff;
       letter-spacing: -0.025em;
-      color: var(--ink);
-      line-height: 1.15;
-      margin-bottom: 4px;
+      line-height: 1.1;
+      margin-bottom: 14px;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.6);
+    }
+
+    .report-hero-date {
+      font-size: 14px;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.02em;
+      font-weight: 400;
+    }
+
+    .report-hero-sep {
+      margin: 0 8px;
+      opacity: 0.45;
     }
 
     /* Section headers */
@@ -844,7 +930,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: calc(100vh - 48px);
+      min-height: 100vh;
       padding: 40px;
       text-align: center;
       gap: 12px;
@@ -973,7 +1059,7 @@
       vertical-align: middle;
       flex-shrink: 0;
     }
-    .src-health-dot.ok      { background: var(--accent); }
+    .src-health-dot.ok      { background: #60a5fa; }
     .src-health-dot.warn    { background: #C0392B; }
     .src-health-dot.unknown { background: var(--ink-faint); }
 
@@ -1198,8 +1284,15 @@
   <aside class="sidebar">
 
     <div class="masthead">
-      <div class="masthead-eyebrow">AI Intelligence</div>
-      <div class="masthead-title">The <span>Brief</span></div>
+      <div class="masthead-logo">
+        <div class="masthead-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div class="masthead-title">The <span>Brief</span></div>
+      </div>
+      <div class="masthead-sub">AI News Monitor</div>
     </div>
 
     <div class="run-section">
@@ -1225,6 +1318,9 @@
 
     <div class="sb-footer">
       <button class="sb-footer-link" onclick="clearAllHistory()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+        </svg>
         Clear all history
       </button>
     </div>
@@ -1235,12 +1331,6 @@
        MAIN
   ══════════════════════════════════ -->
   <main class="main">
-
-    <div class="topbar">
-      <span class="topbar-label">The Brief</span>
-      <div class="topbar-divider"></div>
-      <span class="topbar-title" id="topbarTitle">Select a report</span>
-    </div>
 
     <div class="reader-wrap" id="readerWrap">
       <div class="reader" id="reader">
@@ -1321,6 +1411,85 @@ let runTimerInterval = null;
 let runStartTime  = null;
 let isRunning     = false;
 
+// ── Hero backgrounds — 5 color themes with visible grid lines ────────────────
+// Grid lines use light-blue/white (high contrast vs dark navy) so they're actually
+// visible. Edge glows add color without covering the text area.
+const HERO_THEMES = [
+  // accent color,  left-glow color,           right-glow color,          base gradient
+  ['#818cf8', 'rgba(72,52,180,0.65)',  'rgba(30,80,210,0.50)',  'linear-gradient(105deg,#10093a 0%,#0e1a52 45%,#0c1e60 75%,#091540 100%)'],
+  ['#38bdf8', 'rgba(14,80,160,0.65)',  'rgba(6,100,180,0.50)',  'linear-gradient(105deg,#041828 0%,#062040 45%,#083060 75%,#041828 100%)'],
+  ['#22d3ee', 'rgba(8,100,160,0.65)',  'rgba(6,140,180,0.50)',  'linear-gradient(105deg,#031620 0%,#051e30 45%,#072840 75%,#031620 100%)'],
+  ['#60a5fa', 'rgba(30,80,200,0.65)',  'rgba(50,110,220,0.50)', 'linear-gradient(105deg,#060e28 0%,#0a183e 45%,#0c1e50 75%,#080e28 100%)'],
+  ['#c084fc', 'rgba(88,28,180,0.65)',  'rgba(160,40,200,0.50)', 'linear-gradient(105deg,#0c0624 0%,#10082e 45%,#120830 75%,#0a0620 100%)'],
+];
+
+const HERO_BACKGROUNDS = HERO_THEMES.map(([, lg, rg, base]) =>
+  `radial-gradient(ellipse 28% 100% at 0%   50%, ${lg} 0%, transparent 70%),
+   radial-gradient(ellipse 28% 100% at 100% 50%, ${rg} 0%, transparent 70%),
+   repeating-linear-gradient(0deg,  transparent, transparent 47px, rgba(180,210,255,0.13) 48px),
+   repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(180,210,255,0.13) 48px),
+   ${base}`
+);
+
+// Helper: return the accent colour for a given seed
+function heroAccent(seed) { return HERO_THEMES[seed % HERO_THEMES.length][0]; }
+
+// SVG hex panel (reused for left + right, right side is CSS scaleX(-1))
+function heroHexSVG(accent) {
+  const s  = accent;
+  const sd = accent.replace(')', ',0.55)').replace('rgb(','rgba(').replace('#', '');
+  // Build the hex outline + node dots + connecting lines in a 220×160 viewport
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+    <defs>
+      <filter id="hglow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="3" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <!-- connecting lines -->
+    <line x1="10"  y1="50"  x2="72"  y2="80"  stroke="${s}" stroke-width="1" opacity="0.45"/>
+    <line x1="72"  y1="80"  x2="10"  y2="110" stroke="${s}" stroke-width="1" opacity="0.45"/>
+    <line x1="72"  y1="80"  x2="148" y2="80"  stroke="${s}" stroke-width="1" opacity="0.35"/>
+    <line x1="10"  y1="50"  x2="50"  y2="10"  stroke="${s}" stroke-width="1" opacity="0.30"/>
+    <!-- hex 1: upper-left (partly off-screen) -->
+    <path d="M-18,18 L14,0 L46,18 L46,54 L14,72 L-18,54 Z"
+          stroke="${s}" stroke-width="1.5" fill="none" opacity="0.60"/>
+    <!-- hex 2: center -->
+    <path d="M42,50 L74,32 L106,50 L106,86 L74,104 L42,86 Z"
+          stroke="${s}" stroke-width="1.5" fill="none" opacity="0.70"/>
+    <!-- hex 3: lower-left (partly off-screen) -->
+    <path d="M-18,88 L14,70 L46,88 L46,124 L14,142 L-18,124 Z"
+          stroke="${s}" stroke-width="1.5" fill="none" opacity="0.50"/>
+    <!-- hex 4: far right faint -->
+    <path d="M148,56 L176,40 L204,56 L204,88 L176,104 L148,88 Z"
+          stroke="${s}" stroke-width="1" fill="none" opacity="0.30"/>
+    <!-- node dots -->
+    <circle cx="10"  cy="50"  r="3" fill="${s}" opacity="0.90" filter="url(#hglow)"/>
+    <circle cx="72"  cy="80"  r="3.5" fill="${s}" opacity="0.95" filter="url(#hglow)"/>
+    <circle cx="10"  cy="110" r="3" fill="${s}" opacity="0.90" filter="url(#hglow)"/>
+    <circle cx="148" cy="80"  r="2.5" fill="${s}" opacity="0.80" filter="url(#hglow)"/>
+    <circle cx="50"  cy="10"  r="2"   fill="${s}" opacity="0.70" filter="url(#hglow)"/>
+  </svg>`;
+}
+
+// Scattered glow dot SVG (full-width, absolute overlay)
+function heroGlowDots(accent) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 900 160" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <filter id="dglow">
+        <feGaussianBlur stdDeviation="4" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <circle cx="310" cy="30"  r="3"   fill="${accent}" opacity="0.90" filter="url(#dglow)"/>
+    <circle cx="560" cy="55"  r="2.5" fill="${accent}" opacity="0.80" filter="url(#dglow)"/>
+    <circle cx="720" cy="22"  r="2"   fill="${accent}" opacity="0.70" filter="url(#dglow)"/>
+    <circle cx="420" cy="120" r="2"   fill="${accent}" opacity="0.65" filter="url(#dglow)"/>
+    <circle cx="240" cy="90"  r="1.5" fill="${accent}" opacity="0.60" filter="url(#dglow)"/>
+    <circle cx="650" cy="105" r="2"   fill="${accent}" opacity="0.60" filter="url(#dglow)"/>
+  </svg>`;
+}
+
 // ── Boot ─────────────────────────────────────────────────────────────────────
 async function boot() {
   await loadReports();
@@ -1390,11 +1559,18 @@ function reportItemHTML(report, isCurrent) {
   return `
     <div class="report-item" id="item-${report.filename.replace('.', '-')}"
          onclick="loadReport('${safe}')">
-      <span class="report-item-date">${report.display_date}</span>
-      <span class="report-item-meta">${countStr}</span>
-      ${tag}
+      <span class="report-item-dot"></span>
+      <div class="report-item-body">
+        <div class="report-item-date">${report.display_date}</div>
+        <div class="report-item-meta">${countStr}</div>
+        ${tag}
+      </div>
       <button class="delete-btn" title="Delete this run"
-              onclick="event.stopPropagation(); deleteReport('${safe}')">&#x1F5D1;</button>
+              onclick="event.stopPropagation(); deleteReport('${safe}')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+        </svg>
+      </button>
     </div>`;
 }
 
@@ -1402,7 +1578,6 @@ async function loadReport(filename) {
   activeFilename = filename;
   deactivateSourcesBtn();
   markActive(filename);
-  updateTopbar(filename);
   showLoading();
   try {
     const res  = await fetch(`/api/reports/${encodeURIComponent(filename)}`);
@@ -1431,6 +1606,41 @@ function postProcessReport() {
       c.classList.add(`badge-${t}`);
     }
   });
+
+  // ── Hero header — replace h1 with full-bleed tech banner ──────────────────
+  const h1 = el.querySelector('h1');
+  if (h1) {
+    const reportMeta = allReports.find(r => r.filename === activeFilename);
+    const dateLabel  = reportMeta ? reportMeta.display_date : '';
+    const itemCount  = reportMeta && reportMeta.item_count > 0
+      ? `${reportMeta.item_count} item${reportMeta.item_count !== 1 ? 's' : ''}` : '';
+
+    // Pick background deterministically from filename so the same report always
+    // shows the same theme; fall back to random for unsaved/preview reports.
+    const seed = activeFilename
+      ? activeFilename.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+      : Math.floor(Math.random() * 1000);
+    const bg     = HERO_BACKGROUNDS[seed % HERO_BACKGROUNDS.length];
+    const accent = heroAccent(seed);
+
+    const hero = document.createElement('div');
+    hero.className = 'report-hero';
+    hero.style.background = bg;
+    hero.innerHTML = `
+      <div class="report-hero-hex report-hero-hex-left">${heroHexSVG(accent)}</div>
+      <div class="report-hero-hex report-hero-hex-right">${heroHexSVG(accent)}</div>
+      <div class="report-hero-dots">${heroGlowDots(accent)}</div>
+      <div class="report-hero-text">
+        <div class="report-hero-eyebrow">THE BRIEF</div>
+        <div class="report-hero-title">AI News Summary</div>
+        ${dateLabel
+          ? `<div class="report-hero-date">${esc(dateLabel)}${itemCount
+              ? `<span class="report-hero-sep">·</span>${itemCount}` : ''}</div>`
+          : ''}
+      </div>
+    `;
+    h1.replaceWith(hero);
+  }
 
   // ── Collapsible Run Metadata ───────────────────────────────────────────────
   el.querySelectorAll('h2').forEach(h2 => {
@@ -1572,16 +1782,6 @@ function filterBySource(sourceName, clickedPill) {
     const match = !sourceName || w.dataset.source === sourceName;
     w.classList.toggle('source-hidden', !match);
   });
-}
-
-// ── Topbar ────────────────────────────────────────────────────────────────────
-function updateTopbar(filename) {
-  const r   = allReports.find(r => r.filename === filename);
-  const el  = document.getElementById('topbarTitle');
-  if (r) {
-    el.textContent = r.display_date +
-      (r.item_count > 0 ? ` — ${r.item_count} items` : '');
-  }
 }
 
 // ── Active ────────────────────────────────────────────────────────────────────
@@ -1755,7 +1955,7 @@ async function showRunFailed(data) {
                   font-family:var(--mono);font-size:11.5px;color:rgba(180,210,235,0.65);
                   max-height:340px;overflow-y:auto;line-height:1.7;text-align:left;display:block">${
         lines.map(l => {
-          const cls = /error|traceback|exception/i.test(l) ? 'color:#E07070' : /warning/i.test(l) ? 'color:#E8A020' : /complete|success/i.test(l) ? 'color:#5EC9A0' : '';
+          const cls = /error|traceback|exception/i.test(l) ? 'color:#E07070' : /warning/i.test(l) ? 'color:#E8A020' : /complete|success/i.test(l) ? 'color:#60a5fa' : '';
           return `<span style="display:block;${cls}">${esc(l)}</span>`;
         }).join('')
       }</div>
@@ -1787,7 +1987,6 @@ async function deleteReport(filename) {
             Click <strong>Run Now</strong> to fetch them again.
           </div>
         </div>`;
-      document.getElementById('topbarTitle').textContent = 'Select a report';
     }
     await loadReports();
   } catch (e) { alert('Could not connect to server.'); }
@@ -1814,7 +2013,6 @@ async function clearAllHistory() {
           Click <strong>Run Now</strong> to fetch the last 14 days.
         </div>
       </div>`;
-    document.getElementById('topbarTitle').textContent = 'Ready to run';
     await loadReports();
   } catch (e) { alert('Could not connect to server.'); }
 }
@@ -1889,7 +2087,6 @@ async function showSourcesPanel() {
   activeFilename = null;
   document.querySelectorAll('.report-item').forEach(el => el.classList.remove('active'));
   document.getElementById('sourcesBtn').classList.add('active');
-  document.getElementById('topbarTitle').textContent = 'Manage Sources';
   showLoading();
   try {
     const res  = await fetch('/api/sources');
