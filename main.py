@@ -502,7 +502,8 @@ def _execute_pipeline(
     meta.finished_at = utcnow()
 
     # ── Build and write report BEFORE finish_run so report_path is saved ─────
-    source_health = get_all_source_health()
+    active_ids = {s.id for s in config.sources}
+    source_health = [h for h in get_all_source_health() if h.source_id in active_ids]
     report = _build_report(meta, top_clusters, honorable, config, source_health)
     report_path = write_markdown(report)
     meta.report_path = str(report_path)
