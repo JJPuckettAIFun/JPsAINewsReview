@@ -992,6 +992,29 @@
       display: none;
     }
 
+    /* ── Expand / collapse all bar ───────────────────────────────────────────── */
+    .expand-collapse-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+    .expand-collapse-btn {
+      background: none;
+      border: none;
+      font-size: 11px;
+      color: var(--ink-light);
+      cursor: pointer;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-family: var(--font);
+      letter-spacing: 0.01em;
+      transition: color 0.12s, background 0.12s;
+    }
+    .expand-collapse-btn:hover { color: var(--accent); background: var(--accent-wash); }
+    .expand-collapse-sep { font-size: 11px; color: var(--rule-strong); user-select: none; }
+
     /* Run failed view */
     .fail-view {
       display: flex;
@@ -1914,6 +1937,25 @@ function postProcessReport() {
 
     wrappers[0].parentNode.insertBefore(bar, wrappers[0]);
   }
+
+  // Expand / collapse all — always shown when there are articles
+  if (wrappers.length > 0) {
+    const ecBar = document.createElement('div');
+    ecBar.className = 'expand-collapse-bar';
+    ecBar.id = 'expandCollapseBar';
+    ecBar.innerHTML =
+      `<button class="expand-collapse-btn" onclick="setAllArticles(false)">Expand all</button>` +
+      `<span class="expand-collapse-sep">·</span>` +
+      `<button class="expand-collapse-btn" onclick="setAllArticles(true)">Collapse all</button>`;
+    wrappers[0].parentNode.insertBefore(ecBar, wrappers[0]);
+  }
+}
+
+function setAllArticles(collapse) {
+  const el = document.getElementById('reportContent');
+  if (!el) return;
+  el.querySelectorAll('.article-body').forEach(b => b.classList.toggle('collapsed', collapse));
+  el.querySelectorAll('.article-header').forEach(h => h.classList.toggle('collapsed', collapse));
 }
 
 function filterBySource(sourceName, clickedPill) {
