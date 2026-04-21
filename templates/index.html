@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Brief — AI News Monitor</title>
+  <script>(function(){var t=localStorage.getItem('brief-theme')||'dark';document.documentElement.dataset.theme=t;})()</script>
   <style>
     /* ── Reset ─────────────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -44,6 +45,75 @@
       --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --mono: "SF Mono", "Fira Code", Consolas, monospace;
     }
+
+    /* ── Dark theme — reading pane goes dark, sidebar stays navy ────────────── */
+    html[data-theme="dark"] {
+      --parchment:    #0d1117;
+      --parchment-2:  #161b22;
+      --white:        #0d1117;
+      --ink:          #e6edf3;
+      --ink-mid:      #8b949e;
+      --ink-light:    #6e7681;
+      --ink-faint:    #484f58;
+      --rule:         rgba(230, 237, 243, 0.07);
+      --rule-strong:  rgba(230, 237, 243, 0.13);
+      --link:         #58a6ff;
+      --link-light:   rgba(88, 166, 255, 0.10);
+      --accent-wash:  rgba(59, 130, 246, 0.14);
+      --accent-light: rgba(59, 130, 246, 0.20);
+    }
+    html[data-theme="dark"] .reader-wrap::-webkit-scrollbar-thumb { background: rgba(230,237,243,0.18); }
+    html[data-theme="dark"] .loading-ring   { border-color: var(--parchment-2); border-top-color: var(--accent); }
+    html[data-theme="dark"] .modal          { background: #161b22; border: 1px solid rgba(240,246,252,0.10); }
+    html[data-theme="dark"] .modal-title    { color: var(--ink); }
+    html[data-theme="dark"] .modal-subtitle { color: var(--ink-light); }
+    html[data-theme="dark"] .form-input     { background: #0d1117; border-color: var(--rule-strong); color: var(--ink); }
+    html[data-theme="dark"] .btn-secondary  { border-color: var(--rule-strong); color: var(--ink-mid); }
+    html[data-theme="dark"] .btn-secondary:hover { border-color: var(--ink-mid); }
+    html[data-theme="dark"] .modal-close    { color: var(--ink-faint); }
+    html[data-theme="dark"] .modal-close:hover { color: var(--ink); }
+    html[data-theme="dark"] .report-content th { background: var(--parchment-2); border-color: var(--rule); }
+    html[data-theme="dark"] .report-content td { border-color: var(--rule); }
+    html[data-theme="dark"] .report-content tr:nth-child(even) td { background: rgba(255,255,255,0.025); }
+    html[data-theme="dark"] .run-tip-box    { background: var(--parchment-2); }
+    html[data-theme="dark"] .source-filter-pill.all-pill.active { background: var(--ink-mid); border-color: var(--ink-mid); }
+
+    /* ── Light theme — sidebar goes light, reading pane stays parchment ──────── */
+    html[data-theme="light"] {
+      --sb-text:      #1e3550;
+      --sb-muted:     #587aa0;
+      --sb-hover:     rgba(26, 36, 51, 0.055);
+      --sb-active-bg: rgba(59, 130, 246, 0.10);
+      --sb-rule:      rgba(26, 36, 51, 0.10);
+    }
+    html[data-theme="light"] .sidebar {
+      background:
+        repeating-linear-gradient(0deg,  transparent, transparent 47px, rgba(26,36,51,0.025) 48px),
+        repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(26,36,51,0.025) 48px),
+        radial-gradient(ellipse 120% 40% at 50% 0%,   rgba(59,130,246,0.09) 0%, transparent 70%),
+        radial-gradient(ellipse 120% 40% at 50% 100%, rgba(59,130,246,0.06) 0%, transparent 70%),
+        linear-gradient(175deg, #f8fafc 0%, #f0f5fb 50%, #e8eef6 100%);
+      border-right: 1px solid rgba(26, 36, 51, 0.10);
+    }
+    html[data-theme="light"] .masthead            { border-bottom: 1px solid rgba(26,36,51,0.08); }
+    html[data-theme="light"] .masthead-title      { color: #1A2433; }
+    html[data-theme="light"] .run-section         { border-bottom: 1px solid rgba(26,36,51,0.08); }
+    html[data-theme="light"] .sb-footer           { border-top: 1px solid rgba(26,36,51,0.08); }
+    html[data-theme="light"] .nav::-webkit-scrollbar-thumb { background: rgba(26,36,51,0.14); }
+    html[data-theme="light"] .report-item-dot     { background: rgba(26,36,51,0.13); }
+    html[data-theme="light"] .report-item:hover  .report-item-dot { background: var(--accent); opacity: 0.65; box-shadow: none; }
+    html[data-theme="light"] .report-item.active .report-item-dot { background: var(--accent); box-shadow: 0 0 6px rgba(59,130,246,0.40); }
+    html[data-theme="light"] .report-item-date    { color: #1e3550; }
+    html[data-theme="light"] .report-item.active .report-item-date { color: #0f1e33; font-weight: 600; }
+    html[data-theme="light"] .report-item-tag     { color: var(--accent-dark); background: rgba(59,130,246,0.10); }
+    html[data-theme="light"] .run-btn:disabled    { background: rgba(26,36,51,0.07); color: var(--sb-muted); }
+    html[data-theme="light"] .sb-sources-btn:hover { background: rgba(26,36,51,0.05); border-color: rgba(26,36,51,0.18); color: #1A2433; }
+    html[data-theme="light"] .delete-btn          { border-color: rgba(220,38,38,0.22); color: rgba(220,38,38,0.55); }
+    html[data-theme="light"] .nav-label           { color: #7a98b8; }
+    html[data-theme="light"] .no-reports          { color: #7a98b8; }
+    html[data-theme="light"] .report-hero-eyebrow { color: var(--accent-dark); }
+    html[data-theme="light"] .report-hero-title   { color: var(--ink); text-shadow: none; }
+    html[data-theme="light"] .report-hero-date    { color: var(--ink-mid); }
 
     html, body { height: 100%; overflow: hidden; font-family: var(--font); background: var(--parchment); color: var(--ink); }
 
@@ -1272,6 +1342,28 @@
       font-size: 12px;
       color: #C0392B;
     }
+
+    /* ── Theme toggle button ─────────────────────────────────────────────────── */
+    .theme-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 11px;
+      color: var(--sb-muted);
+      cursor: pointer;
+      background: none;
+      border: none;
+      border-radius: 5px;
+      font-family: var(--font);
+      letter-spacing: 0.01em;
+      transition: color 0.15s, background 0.15s;
+      text-align: left;
+      margin-bottom: 2px;
+    }
+    .theme-btn:hover { color: var(--sb-text); background: var(--sb-hover); }
+    .theme-btn svg { flex-shrink: 0; opacity: 0.75; }
   </style>
 </head>
 <body>
@@ -1317,6 +1409,12 @@
     </nav>
 
     <div class="sb-footer">
+      <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()">
+        <svg id="themeIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <span id="themeLabel">Light Mode</span>
+      </button>
       <button class="sb-footer-link" onclick="clearAllHistory()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
@@ -1431,8 +1529,35 @@ const HERO_BACKGROUNDS = HERO_THEMES.map(([, lg, rg, base]) =>
    ${base}`
 );
 
+// Light hero themes — pastel bases with deep accent colours
+const HERO_THEMES_LIGHT = [
+  ['#4338ca', 'rgba(99,102,241,0.14)',  'rgba(79,70,229,0.10)',  'linear-gradient(105deg,#eef2ff 0%,#e0e7ff 45%,#dbeafe 75%,#eff6ff 100%)'],
+  ['#0369a1', 'rgba(14,165,233,0.14)',  'rgba(3,105,161,0.10)',  'linear-gradient(105deg,#f0f9ff 0%,#e0f2fe 45%,#bae6fd 75%,#f0f9ff 100%)'],
+  ['#0e7490', 'rgba(8,145,178,0.14)',   'rgba(6,182,212,0.10)',  'linear-gradient(105deg,#ecfeff 0%,#cffafe 45%,#a5f3fc 75%,#ecfeff 100%)'],
+  ['#1d4ed8', 'rgba(37,99,235,0.14)',   'rgba(59,130,246,0.10)', 'linear-gradient(105deg,#eff6ff 0%,#dbeafe 45%,#bfdbfe 75%,#eff6ff 100%)'],
+  ['#6d28d9', 'rgba(124,58,237,0.14)',  'rgba(167,139,250,0.10)','linear-gradient(105deg,#f5f3ff 0%,#ede9fe 45%,#ddd6fe 75%,#f5f3ff 100%)'],
+];
+
+const HERO_BACKGROUNDS_LIGHT = HERO_THEMES_LIGHT.map(([, lg, rg, base]) =>
+  `radial-gradient(ellipse 28% 100% at 0%   50%, ${lg} 0%, transparent 70%),
+   radial-gradient(ellipse 28% 100% at 100% 50%, ${rg} 0%, transparent 70%),
+   repeating-linear-gradient(0deg,  transparent, transparent 47px, rgba(26,36,51,0.035) 48px),
+   repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(26,36,51,0.035) 48px),
+   ${base}`
+);
+
 // Helper: return the accent colour for a given seed
 function heroAccent(seed) { return HERO_THEMES[seed % HERO_THEMES.length][0]; }
+function heroAccentForTheme(seed) {
+  return document.documentElement.dataset.theme === 'light'
+    ? HERO_THEMES_LIGHT[seed % HERO_THEMES_LIGHT.length][0]
+    : HERO_THEMES[seed % HERO_THEMES.length][0];
+}
+function heroBgForTheme(seed) {
+  return document.documentElement.dataset.theme === 'light'
+    ? HERO_BACKGROUNDS_LIGHT[seed % HERO_BACKGROUNDS_LIGHT.length]
+    : HERO_BACKGROUNDS[seed % HERO_BACKGROUNDS.length];
+}
 
 // SVG hex panel (reused for left + right, right side is CSS scaleX(-1))
 function heroHexSVG(accent) {
@@ -1490,8 +1615,31 @@ function heroGlowDots(accent) {
   </svg>`;
 }
 
+// ── Theme ─────────────────────────────────────────────────────────────────────
+let activeReportData = null;
+
+const SUN_SVG  = `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`;
+const MOON_SVG = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
+
+function getTheme() { return localStorage.getItem('brief-theme') || 'dark'; }
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem('brief-theme', theme);
+  const icon  = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if (icon)  icon.innerHTML  = theme === 'dark' ? SUN_SVG : MOON_SVG;
+  if (label) label.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+  if (activeReportData) renderReport(activeReportData);
+}
+
+function toggleTheme() {
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+}
+
 // ── Boot ─────────────────────────────────────────────────────────────────────
 async function boot() {
+  applyTheme(getTheme());
   await loadReports();
   checkInitialRunState();
 }
@@ -1589,6 +1737,7 @@ async function loadReport(filename) {
 }
 
 function renderReport(data) {
+  activeReportData = data;
   document.getElementById('reader').innerHTML =
     `<div class="report-content" id="reportContent">${data.html}</div>`;
   postProcessReport();
@@ -1620,8 +1769,8 @@ function postProcessReport() {
     const seed = activeFilename
       ? activeFilename.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
       : Math.floor(Math.random() * 1000);
-    const bg     = HERO_BACKGROUNDS[seed % HERO_BACKGROUNDS.length];
-    const accent = heroAccent(seed);
+    const bg     = heroBgForTheme(seed);
+    const accent = heroAccentForTheme(seed);
 
     const hero = document.createElement('div');
     hero.className = 'report-hero';
