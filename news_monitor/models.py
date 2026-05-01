@@ -131,6 +131,7 @@ class Report:
     honorable_mentions: list[EventCluster]  # low, or medium if --include-low used
     source_health: list[SourceHealth]
     generated_at: datetime = field(default_factory=datetime.utcnow)
+    rejected_items: list[EventCluster] = field(default_factory=list)  # scored < threshold
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────

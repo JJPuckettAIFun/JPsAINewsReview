@@ -487,6 +487,7 @@ def _execute_pipeline(
 
     top_clusters: list[EventCluster] = []
     honorable: list[EventCluster] = []
+    rejected_clusters: list[EventCluster] = []
 
     for cluster in clusters:
         if category_filter and cluster.category != category_filter:
@@ -495,6 +496,8 @@ def _execute_pipeline(
             top_clusters.append(cluster)
         elif args.include_low or cluster.label != "low":
             honorable.append(cluster)
+        else:
+            rejected_clusters.append(cluster)
 
     # ── Finalize metadata ─────────────────────────────────────────────────────
     meta.articles_selected = len(top_clusters)
@@ -504,12 +507,16 @@ def _execute_pipeline(
     # ── Build and write report BEFORE finish_run so report_path is saved ─────
     active_ids = {s.id for s in config.sources}
     source_health = [h for h in get_all_source_health() if h.source_id in active_ids]
-    report = _build_report(meta, top_clusters, honorable, config, source_health)
+    report = _build_report(meta, top_clusters, honorable, config, source_health, rejected_clusters)
     report_path = write_markdown(report)
     meta.report_path = str(report_path)
 
     # ── Write state ───────────────────────────────────────────────────────────
     finish_run(run_id, meta)
+
+    if rejected_clusters:
+        from news_monitor.reporter import write_rejected_json
+        write_rejected_json(report, report_path)
 
     if args.json:
         write_json(report)
@@ -527,6 +534,7 @@ def _build_report(
     honorable: list[EventCluster],
     config,
     source_health: Optional[list[SourceHealth]] = None,
+    rejected: Optional[list[EventCluster]] = None,
 ) -> Report:
     return Report(
         metadata=meta,
@@ -534,6 +542,7 @@ def _build_report(
         honorable_mentions=honorable,
         source_health=source_health or [],
         generated_at=utcnow(),
+        rejected_items=rejected or [],
     )
 
 

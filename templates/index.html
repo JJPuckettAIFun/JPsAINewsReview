@@ -1015,6 +1015,55 @@
     .expand-collapse-btn:hover { color: var(--accent); background: var(--accent-wash); }
     .expand-collapse-sep { font-size: 11px; color: var(--rule-strong); user-select: none; }
 
+    /* ── Filtered / rejected articles panel ──────────────────────────────────── */
+    .rejected-panel {
+      margin-top: 28px;
+      border-top: 1px solid var(--rule);
+      padding-top: 18px;
+    }
+    .rejected-panel-header {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      margin-bottom: 12px;
+    }
+    .rejected-item {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--rule);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .rejected-item:last-child { border-bottom: none; }
+    .rejected-score {
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--ink-light);
+      background: var(--surface-2, var(--bg));
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      padding: 1px 5px;
+      min-width: 32px;
+      text-align: center;
+    }
+    .rejected-title a {
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .rejected-title a:hover { color: var(--accent); text-decoration: underline; }
+    .rejected-meta {
+      flex-shrink: 0;
+      font-size: 11px;
+      color: var(--ink-light);
+      white-space: nowrap;
+    }
+
     /* Run failed view */
     .fail-view {
       display: flex;
@@ -1948,7 +1997,83 @@ function postProcessReport() {
       `<span class="expand-collapse-sep">·</span>` +
       `<button class="expand-collapse-btn" onclick="setAllArticles(true)">Collapse all</button>`;
     wrappers[0].parentNode.insertBefore(ecBar, wrappers[0]);
+
+    // Fetch rejected articles for this report and add the toggle button
+    if (activeFilename) {
+      fetch(`/api/reports/${encodeURIComponent(activeFilename)}/rejected`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.count || data.count === 0) return;
+
+          // Add separator + button to the bar
+          const sep = document.createElement('span');
+          sep.className = 'expand-collapse-sep';
+          sep.textContent = '·';
+          ecBar.appendChild(sep);
+
+          const btn = document.createElement('button');
+          btn.className = 'expand-collapse-btn';
+          btn.id = 'toggleRejectedBtn';
+          btn.textContent = `Show filtered (${data.count})`;
+          btn.addEventListener('click', () => toggleRejectedPanel(data, btn));
+          ecBar.appendChild(btn);
+        })
+        .catch(() => {/* silently ignore if sidecar unavailable */});
+    }
   }
+}
+
+function toggleRejectedPanel(data, btn) {
+  const el = document.getElementById('reportContent');
+  if (!el) return;
+
+  let panel = el.querySelector('.rejected-panel');
+
+  if (panel) {
+    // Toggle visibility
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? '' : 'none';
+    btn.textContent = isHidden
+      ? `Hide filtered (${data.count})`
+      : `Show filtered (${data.count})`;
+    return;
+  }
+
+  // Build panel on first open
+  panel = document.createElement('div');
+  panel.className = 'rejected-panel';
+
+  const header = document.createElement('div');
+  header.className = 'rejected-panel-header';
+  header.textContent = `Filtered out — scored below ${data.threshold} (${data.count} article${data.count !== 1 ? 's' : ''})`;
+  panel.appendChild(header);
+
+  data.items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'rejected-item';
+
+    const score = document.createElement('span');
+    score.className = 'rejected-score';
+    score.textContent = item.score;
+    row.appendChild(score);
+
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'rejected-title';
+    titleSpan.style.flex = '1';
+    titleSpan.innerHTML = `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title)}</a>`;
+    row.appendChild(titleSpan);
+
+    const meta = document.createElement('span');
+    meta.className = 'rejected-meta';
+    const cat = item.category ? item.category.replace(/_/g, ' ') : '';
+    meta.textContent = `${item.source_name}${cat ? ' · ' + cat : ''}`;
+    row.appendChild(meta);
+
+    panel.appendChild(row);
+  });
+
+  el.appendChild(panel);
+  btn.textContent = `Hide filtered (${data.count})`;
 }
 
 function setAllArticles(collapse) {
