@@ -237,6 +237,45 @@ def _article_to_dict(art: Article) -> dict:
     }
 
 
+# ─── Rejected articles sidecar ───────────────────────────────────────────────
+
+
+def write_rejected_json(report: Report, md_path: Path) -> Path:
+    """
+    Write a sidecar JSON file listing articles that were scored but fell below
+    the selection threshold.  File sits alongside the Markdown report:
+      YYYY-MM-DD-ai-news-summary.rejected.json
+    Returns the sidecar path.
+    """
+    sidecar_path = md_path.with_suffix("").with_suffix(".rejected.json")
+
+    items = []
+    for cluster in report.rejected_items:
+        art = cluster.canonical
+        items.append({
+            "title":        art.title,
+            "url":          art.url,
+            "source_name":  art.source_name,
+            "published_at": art.published_at.isoformat() if art.published_at else None,
+            "score":        cluster.score,
+            "label":        cluster.label,
+            "category":     cluster.category,
+        })
+
+    # Sort highest score first so the most borderline articles appear at top
+    items.sort(key=lambda x: x["score"], reverse=True)
+
+    data = {
+        "count":     len(items),
+        "threshold": 50,
+        "items":     items,
+    }
+
+    sidecar_path.parent.mkdir(parents=True, exist_ok=True)
+    sidecar_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    return sidecar_path
+
+
 # ─── Terminal output ──────────────────────────────────────────────────────────
 
 

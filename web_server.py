@@ -24,6 +24,7 @@ API routes:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -105,6 +106,25 @@ def get_report(filename: str):
         "html": html,
         **_report_meta(path),
     })
+
+
+@app.route("/api/reports/<path:filename>/rejected")
+def get_rejected_articles(filename: str):
+    """Return the filtered (below-threshold) articles sidecar for a report."""
+    safe_name = Path(filename).name
+    if not safe_name.endswith(".md"):
+        return jsonify({"error": "invalid file"}), 400
+
+    sidecar_name = safe_name.replace(".md", ".rejected.json")
+    path = REPORTS_DIR / sidecar_name
+    if not path.exists():
+        return jsonify({"count": 0, "threshold": 50, "items": []}), 200
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return jsonify(data)
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @app.route("/api/reports/<path:filename>", methods=["DELETE"])
